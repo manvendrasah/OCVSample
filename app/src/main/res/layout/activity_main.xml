@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@android:color/white"
+              android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:id="@+id/fl_scan"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/fl_scan_tile"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/iv_scan_tile_tl"
+                android:layout_width="@dimen/tile_scan_width"
+                android:layout_height="@dimen/tile_scan_height"
+                android:layout_gravity="top|left"
+                android:background="@color/grey_light_alpha"/>
+
+            <ImageView
+                android:id="@+id/iv_scan_tile_tr"
+                android:layout_width="@dimen/tile_scan_width"
+                android:layout_height="@dimen/tile_scan_height"
+                android:layout_gravity="top|right"
+                android:background="@color/grey_light_alpha"
+                android:visibility="visible"/>
+
+            <ImageView
+                android:id="@+id/iv_scan_tile_bl"
+                android:layout_width="@dimen/tile_scan_width"
+                android:layout_height="@dimen/tile_scan_height"
+                android:layout_gravity="bottom|left"
+                android:background="@color/grey_light_alpha"/>
+
+            <ImageView
+                android:id="@+id/iv_scan_tile_br"
+                android:layout_width="@dimen/tile_scan_width"
+                android:layout_height="@dimen/tile_scan_height"
+                android:layout_gravity="bottom|right"
+                android:background="@color/grey_light_alpha"
+                android:visibility="visible"/>
+        </FrameLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/hsv_frame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/ll_frame"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="80dp"
+                android:layout_marginTop="80dp"
+                android:background="#ccc"
+                android:gravity="center"
+                android:orientation="horizontal">
+            </LinearLayout>
+        </HorizontalScrollView>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_omr_scan_footer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black">
+    </FrameLayout>
+</LinearLayout>
