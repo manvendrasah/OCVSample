@@ -22,7 +22,7 @@ android {
         abi {
             enable true
             reset()
-            include "armeabi","armeabi-v7a",'arm64-v8a',"mips","x86","x86_64",'arm64-v8a'
+            include "armeabi", "armeabi-v7a", 'arm64-v8a', "mips", "x86", "x86_64", 'arm64-v8a'
             universalApk true
         }
     }
@@ -35,15 +35,29 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
-        release {
+       /* release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    project.ext { appName = 'OCVSample' }
+                    def formattedDate = new Date().format('MMdd')
+                    def newName = output.outputFile.name
+                    newName = newName.replace("app-", "$project.ext.appName-") //"MyAppName" -> I set my app variables in the root project
+                    newName = newName.replace("-debug", "-debug" + formattedDate)
+                    //noinspection GroovyAssignabilityCheck
+                    output.outputFile = new File(output.outputFile.parent, newName)
+                }
+            }
+        }*/
+        debug {
         }
     }
 }
 
 ext.versionCodes = ['armeabi': 3, 'armeabi-v7a': 4, 'arm64-v8a': 5, mips: 6, 'x86': 7, 'x86_64': 8]
 import com.android.build.OutputFile
+
 // For each APK output variant, override versionCode with a combination of
 // ABI APK value * 1000 + defaultConfig.versionCode
 android.applicationVariants.all { variant ->

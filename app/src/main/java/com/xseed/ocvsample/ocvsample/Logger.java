@@ -6,6 +6,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
 import java.util.Map;
@@ -64,7 +65,7 @@ public class Logger {
         event.putCustomAttribute("Android Version", android.os.Build.VERSION.SDK_INT);
         event.putCustomAttribute("Device Model", Build.MODEL);
         event.putCustomAttribute("Brand", Build.MANUFACTURER);
-        //Answers.getInstance().logCustom(event);
+        Answers.getInstance().logCustom(event);
     }
 
     public static void quitLoggerThread() {
