@@ -60,5 +60,4 @@ public class SheetConstants {
     public static final int TYPE_ANSWER = 0;
     public static final int TYPE_ID = 1;
     public static final int TYPE_GRADE = 2;
-
 }

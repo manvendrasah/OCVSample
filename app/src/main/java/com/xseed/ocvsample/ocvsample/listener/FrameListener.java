@@ -146,6 +146,7 @@ public class FrameListener implements Camera.PictureCallback {
                         baseMat = new Mat();
                         Utils.bitmapToMat(baseBitmap, baseMat);
                         Logger.logOCV(" getMatFromBitmap =  " + (System.currentTimeMillis() - dT));
+                        /*rotate mat instead of bitmap to save memory and processing time*/
                         if (frame.getRotation() == 270) {
                             Core.flip(baseMat, baseMat, 0);
                         } else if (frame.getRotation() == 180) {
@@ -171,6 +172,8 @@ public class FrameListener implements Camera.PictureCallback {
         }
     };
 
+    /* create grayscale mat with adaptive threshhold applied to remove shadows
+    * - > get bitmap for blob detection after all circles and dots are found*/
     private void prepareMatForBlobDetection() {
         new Thread() {
             @Override

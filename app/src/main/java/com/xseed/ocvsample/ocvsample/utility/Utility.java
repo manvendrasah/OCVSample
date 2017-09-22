@@ -222,6 +222,8 @@ public class Utility {
         return pointToLineDistance(line.p1, line.p2, circle.center);
     }
 
+    /* get perpendicular distance from point c to
+    * line defined by points l1 and l2 */
     public static double pointToLineDistance(Point l1, Point l2, Point c) {
         double x1 = l1.x;
         double y1 = l1.y;
@@ -236,6 +238,8 @@ public class Utility {
         return dis;
     }
 
+    /* get perpendicular point from point c to
+    * line defined by points l1 and l2*/
     public static Point getPerpendicularPoint(Point l1, Point l2, Point c) {
         double x1 = l1.x;
         double y1 = l1.y;
@@ -273,6 +277,8 @@ public class Utility {
         return newCircle;
     }
 
+    /* get circles between circles c1 and c2 at specific index (pos)
+    * by uniform extrapolation */
     public static Circle getCircleBetweenCircles(Circle c1, Circle c2, double avgRadius, int pos, int totalParts) {
         double x = c1.center.x * (totalParts - pos) / totalParts + c2.center.x * pos / totalParts;
         double y = c1.center.y * (totalParts - pos) / totalParts + c2.center.y * pos / totalParts;
@@ -281,6 +287,8 @@ public class Utility {
         return newCircle;
     }
 
+    /* circle1 is on top of circle 2 ->
+       get another circle such that circle1 is between circle 2 and new circle */
     public static Circle getCircleToTop(Circle circle1, Circle circle2, double avgRadius) {
         double x = 2 * circle1.center.x - circle2.center.x;
         double y = 2 * circle1.center.y - circle2.center.y;
@@ -289,6 +297,8 @@ public class Utility {
         return newCircle;
     }
 
+    /* circle1 is to left of circle 2 ->
+       get another circle such that circle1 is between circle 2 and new circle */
     public static Circle getCircleToLeft(Circle circle1, Circle circle2, double avgRadius) {
         double x = 2 * circle1.center.x - circle2.center.x;
         double y = 2 * circle1.center.y - circle2.center.y;
@@ -297,6 +307,8 @@ public class Utility {
         return newCircle;
     }
 
+    /* circle1 is to right of circle 2 ->
+       get another circle such that circle1 is between circle 2 and new circle */
     public static Circle getCircleToRight(Circle circle1, Circle circle2, double avgRadius) {
         double x = 2 * circle1.center.x - circle2.center.x;
         double y = 2 * circle1.center.y - circle2.center.y;
@@ -305,6 +317,8 @@ public class Utility {
         return newCircle;
     }
 
+    /* circle1 is to bottom of circle 2 ->
+       get another circle such that circle1 is between circle 2 and new circle */
     public static Circle getCircleToBottom(Circle circle1, Circle circle2, double avgRadius) {
         double x = 2 * circle1.center.x - circle2.center.x;
         double y = 2 * circle1.center.y - circle2.center.y;
@@ -313,6 +327,7 @@ public class Utility {
         return newCircle;
     }
 
+    /* get answer row line enclosed by rightmost and leftmost points detected in the row*/
     public static Line getRowLine(Circle leftMostCircle, Circle rightMostCircle, double avgRadius) {
         Circle newLeftMost = getCircleToLeft(leftMostCircle, rightMostCircle, avgRadius);
         Circle newLeftMost2 = getCircleToLeft(newLeftMost, rightMostCircle, avgRadius);
@@ -320,11 +335,12 @@ public class Utility {
         return rowLine;
     }
 
-    public static Point findIntersection(Line exLeftLine, Line rowLine) {
-        Point A = exLeftLine.p1;
-        Point B = exLeftLine.p2;
-        Point C = rowLine.p1;
-        Point D = rowLine.p2;
+    /* find point of intersection of two lines*/
+    public static Point findIntersection(Line l1, Line l2) {
+        Point A = l1.p1;
+        Point B = l1.p2;
+        Point C = l2.p1;
+        Point D = l2.p2;
 
         // Line AB represented as a1x + b1y = c1
         double a1 = B.y - A.y;
@@ -342,9 +358,10 @@ public class Utility {
         return new Point(x, y);
     }
 
-    public static Circle getBottomCircleParallelToLine(Circle circle0, double avgRadius, Line leftLine, double avgCcd) {
-        Point p1 = leftLine.p1;
-        Point p2 = leftLine.p2;
+    /*get circle below circle0 at distance avgCcd parallel to line*/
+    public static Circle getBottomCircleParallelToLine(Circle circle0, double avgRadius, Line line, double avgCcd) {
+        Point p1 = line.p1;
+        Point p2 = line.p2;
         double slope = (p2.x - p1.x) / (p2.y - p1.y);
         double radian = Math.atan(slope);
         double sinVal = Math.sin(radian);
@@ -356,6 +373,7 @@ public class Utility {
         return newCircle;
     }
 
+    /* get circle at intersection of lines l1 and l2*/
     public static Circle getCircleAtIntersection(Line l1, Line l2, double avgRadius) {
         Point p = findIntersection(l1, l2);
         Circle newCircle = new Circle(p.x, p.y, avgRadius);

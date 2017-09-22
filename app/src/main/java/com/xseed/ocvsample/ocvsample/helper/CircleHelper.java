@@ -128,6 +128,7 @@ public class CircleHelper {
         return circleList;
     }
 
+    /* remove all circles with radius outside min and max threshhold values*/
     private void getFilteredListByRadius() {
         double maxRad = cRatios.getFilterMaxRadius();
         double minRad = cRatios.getFilterMinRadius();
@@ -155,8 +156,13 @@ public class CircleHelper {
         Logger.logOCV("creteInitialDS > noOfCircles : " + numCircles);
         ArrayList<Circle> tempList = new ArrayList<>();
         tempList.addAll(circles);
+        /* sort circles by descending values of y*/
         Collections.sort(tempList, new AnswerCircleColumnComparator());
-
+        /* as a row can have max of SheetConstants.NUM_ROWS_ANSWERS answer circles,
+          - > take twice this number (as sorting by descending Y may not always give the bottom most circles) for safety
+          - > get perpendicular distance of these circles from nearest bottom line
+          - > answer row map can be created thus row by row in a bottom-up manner
+          */
         for (int i = 0; i < SheetConstants.NUM_ROWS_ANSWERS; ++i) {
             Line bottom = getBottomLine(circleData.answerCircleMap, i);
             int toIndex = tempList.size() > 2 * SheetConstants.NUM_ANSWERS_IN_ROW ? 2 * SheetConstants.NUM_ANSWERS_IN_ROW : tempList.size();
@@ -168,14 +174,17 @@ public class CircleHelper {
                 tempList.removeAll(row);
             }
         }
+        // all circles not in answer rows are presumed as id/grade circles, but need filtering
         circleData.idGradeCircleList = tempList;
         Logger.logOCV(circleData.toString());
     }
 
     private Line getBottomLine(TreeMap<Integer, ArrayList<Circle>> map, int i) {
+       /* for lowest answer row, nearest bottom line is enclosed by bottom left and right dots*/
         if (i == 0)
             return dotData.getBottomLine();
         else {
+            /* else get nearest available bottom line*/
             List<Circle> row = map.get(i - 1);
             int len = row.size();
             if (len < 2)
@@ -189,6 +198,9 @@ public class CircleHelper {
     }
 
     private ArrayList<Circle> getRowByPerpendicularFromNearestBottomLine(Line line, List<Circle> sample) {
+        /* create map with different rows from circles list sample by measuring perp distance from bottom line.
+        * The row at 0 index with the required row
+        * */
         ArrayList<Circle> finalRow;
         TreeMap<Integer, ArrayList<Circle>> map = new TreeMap<>();
         ListIterator<Circle> iter = sample.listIterator();
@@ -219,6 +231,10 @@ public class CircleHelper {
     }
 
     private boolean extrapolateOuterAnswerUndetectedCircles() {
+        /* Extrapolate outermost left/right circles in each row by measuring distance of left/most detected circles
+        * from left/right lines
+        *  - distance is normalised by top/bottom or left/right line ratios
+        * */
         double ratioVertLine = cRatios.getRightToLeftLineRatio();
         double ratioHorzLine = cRatios.getBottomToTopLineRatio();
         double changeFactorHorz = Math.abs(ratioHorzLine - 1);
@@ -233,6 +249,7 @@ public class CircleHelper {
         double threshLeftVertNorm0 = (threshLeft0 * normHorzMultiplier) / ratioVertLine;
         double threshLeftVertNorm1 = (threshLeft1 * normHorzMultiplier) / ratioVertLine;
         Logger.logOCV("threshL Vert > " + threshLeft0 + ", " + threshLeft1);
+        /* contains indices of rows with leftmost circles detected*/
         ArrayList<Integer> leftMost = new ArrayList<>();
 
         for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
@@ -268,6 +285,7 @@ public class CircleHelper {
         double threshRightVertNorm0 = threshRight0 * ratioVertLine * normHorzMultiplier;
         double threshRightVertNorm1 = threshRight1 * ratioVertLine * normHorzMultiplier;
         Logger.logOCV("threshR Vert > " + threshRight0 + ", " + threshRight1);
+        /* contains indices of rows with rightmost circles detected*/
         ArrayList<Integer> rightMost = new ArrayList<>();
 
         for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
@@ -294,6 +312,7 @@ public class CircleHelper {
         Collections.sort(rightMost);
         Logger.logOCV("rightMost > " + rightMost.toString());
 
+        /*if no two rows have left/rightmost detected circles, extrapolation cant be done and error is thrown*/
         int sizeLeft = leftMost.size();
         int sizeRight = rightMost.size();
         if (sizeLeft < 2 || sizeRight < 2) {
@@ -322,6 +341,10 @@ public class CircleHelper {
             Logger.logOCV("exRightLine > " + exRightLine.toString());
         }
 
+        /* Extrapolate left/right-most circles in other rows (where opencv couldnt detect outermost circles)
+        * - done by finding intersection of left/rightmost answer column lines with individual
+        *  answer rows
+        * */
         for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
             ArrayList<Circle> row = circleData.answerCircleMap.get(k);
             int size = row.size();
@@ -334,7 +357,7 @@ public class CircleHelper {
                 // Logger.logOCV("intersection point left > " + point.toString());
                 Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
                 newCircle.isExtrapolated = true;
-                row.add(0, newCircle);
+                row.add(0, newCircle);//add leftmost circle at index 0
                 Logger.logOCV("extrapolateOuter Left > " + k + " > added by intersection at pos 0 at center = " + point.toString());
             }
             if (canExtraPolateRight && !rightMost.contains(k)) {
@@ -342,7 +365,7 @@ public class CircleHelper {
                 // Logger.logOCV("intersection point right > " + point.toString());
                 Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
                 newCircle.isExtrapolated = true;
-                row.add(row.size(), newCircle);
+                row.add(row.size(), newCircle);// add rightmost circle at last index
                 Logger.logOCV("extrapolateOuter Right > " + k + " > added by intersection at pos " + size + " at center = " + point.toString());
             }
         }
@@ -355,15 +378,18 @@ public class CircleHelper {
         for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k)
             linkList.add(k, k);
 
+        /* contains indices of rows where minCcd couldnt be found*/
         Set<Integer> noAvgSet = new TreeSet<>();
+        /* max circle center distance between two consecutive circles*/
         double ccd = cRatios.getAnswerCirclesCenterDistanceThreshhold();
-        // double avgCcd = 0;
         double minCcd = 0;
         double ratioLineLen = cRatios.getRightToLeftLineRatio();
         double width = 0.8 * baseMat.cols();
         double changeFactor = Math.abs(ratioLineLen - 1);
         Logger.logOCV("extrapolateMiddle > ccd = " + ccd + ", ratioLineLen = " + ratioLineLen);
 
+        /* -  get minccd of every row by normalising avgCcd obtained
+        *  - if row has no consecutive circles, use minCcd of previous row, if available, else add back to list */
         while (!linkList.isEmpty()) {
             int k = linkList.poll();
             Logger.logOCV("extrapolateMiddle > ------------ PROCESS ROW > " + k + " --------------");
@@ -425,16 +451,21 @@ public class CircleHelper {
             } else {
                 noAvgSet.add(k);
                 int size = noAvgSet.size();
+                /* if none of the rows had consecutive circles
+                - > minCcd couldnt be calculated - > throw error*/
                 if (size >= SheetConstants.NUM_ROWS_ANSWERS) {
                     errorType = ErrorType.TYPE6;
                     return false;
                 }
                 Logger.logOCV("extrapolateMiddle > addToSet > " + k + ", setSize = " + noAvgSet.size());
+                // if first index in linklist is in noAvgSet - > remove
                 for (Integer i : noAvgSet) {
                     if (linkList.peek() == i)
                         linkList.poll();
                 }
                 int firstInd = 1;
+                /* add all indices in noAvgSet to linklist from 1st index, so that if 0th index has minCcd calculated
+                * - >  these rows can use the same minCcd, as they themselves don't have consecutive circles*/
                 for (Integer i : noAvgSet) {
                     Logger.logOCV("extrapolateMiddle > addToLinkList > " + i + " at index " + firstInd);
                     linkList.add(firstInd, i);
@@ -446,14 +477,19 @@ public class CircleHelper {
     }
 
     private boolean filterOutExtraAnswerCircles() {
+        /* max distance between consecutive circles ina a row*/
         double ccd = cRatios.getAnswerCirclesCenterDistanceThreshhold();
-        LinkedList<Integer> errorIndices = new LinkedList<>();
-        LinkedList<Integer> safeIndices = new LinkedList<>();
+        LinkedList<Integer> errorIndices = new LinkedList<>(); // contains row indices with wrong no of answer circles
+        LinkedList<Integer> safeIndices = new LinkedList<>(); // containes row indices with right no of answer circles
         int k = 0;
         for (ArrayList<Circle> list : circleData.answerCircleMap.values()) {
             int indexCounter = 0;
             int len = list.size();
             if (len == SheetConstants.NUM_TOTAL_DETECTED_CIRCLES_IN_ROW) {
+                /* if row has correct no. of extrapolated and detected circles
+                 - > remove every 5th consecutive circle, if at a;;
+                 - >  mark indice as safe
+                 - > else mark as error */
                 safeIndices.add(k);
                 for (int i = 0; i < len - 1; ++i) {
                     Circle ci = list.get(i);
@@ -474,6 +510,8 @@ public class CircleHelper {
             ++k;
         }
 
+        /* if only one/zero error indice has correct no. of answer circles
+        * - >  throw error as filtering and extrapolation not possible with the sample set*/
         if (safeIndices.size() < 2) {
             errorType = ErrorType.TYPE7;
             return false;
@@ -482,7 +520,8 @@ public class CircleHelper {
         Collections.sort(errorIndices);
         Logger.logOCV("Answer Final Filter >  error in indices > " + errorIndices.toString());
 
-        // Alter error indices and add circles corresponding to its neighbours
+        /* extrapolate whole rows with error indices
+        * - > by finding intersection of answer row with corresponding column of safe indices */
         int ind0 = safeIndices.get(0);
         int indN = safeIndices.get(safeIndices.size() - 1);
         while (!errorIndices.isEmpty()) {
@@ -517,6 +556,7 @@ public class CircleHelper {
     }
 
     private boolean createIdGradeCircleMap() {
+        /*create circle map by segregating circles on basis of perpendicular distance from left line*/
         ArrayList<Circle> list = circleData.idGradeCircleList;
         avgIdGradeRadius = getAverageRadius(list);
         cRatios.avgIdGradeRadius = avgIdGradeRadius;
@@ -570,6 +610,7 @@ public class CircleHelper {
         for (ArrayList<Circle> tempList : circleData.idCircleMap.values()) {
             if (!tempList.isEmpty()) realSize++;
         }
+        /* even if one column from id or grade isnt detected - > throw error*/
         if (realSize < 4) {
             errorType = ErrorType.TYPE8;
             return false;
@@ -578,6 +619,7 @@ public class CircleHelper {
     }
 
     private void createGradeCircleDS() {
+        /*column with perpendicular distance from answer row col4 line, is below threshhold, is the grade column*/
         TreeSet<Integer> keySet = new TreeSet<>();
         Set<Integer> tempSet = circleData.idGradeCircleMap.keySet();
         keySet.addAll(tempSet);
@@ -616,6 +658,9 @@ public class CircleHelper {
     }
 
     private void createIdCircleDS() {
+        /* last element of every column has its distance measured from the answer column row 0-2
+        *  - > this way extra circles are filtered and columns are not extrapolated from them
+        *  - > also id columns are segregated correctly*/
         double threshHoldToAns4Line = cRatios.getIdGradePerpThreshholdToAnsLine();
         Logger.logOCV("createIdDS > threshAnsLine = " + threshHoldToAns4Line);
         TreeSet<Integer> keySet = new TreeSet<>();
@@ -677,6 +722,7 @@ public class CircleHelper {
     }
 
     private boolean extrapolateIdGradeUndetectedCircles() {
+        /*get avgCcD between two circles*/
         Logger.logOCV("extrapolateIdGradeUndetectedCircles >  avgCcd calculation -------------");
         int len = circleData.idCircleMap.size();
 
@@ -755,6 +801,7 @@ public class CircleHelper {
         if (avgCount == 0) {
            /* mSheetListener.onOMRSheetGradingFailed("No consecutive id circles");
             return;*/
+           /*if id/grade columns dont have consecutive circles, avgCCd from top answer row is taken and normalised*/
             avgCcd = getAverageCcdOfTopAnswerRow(circleData.answerCircleMap.get(SheetConstants.NUM_ROWS_ANSWERS - 1));
             avgCcd = avgCcd * avgIdGradeRadius / avgAnswerRadius;
             Logger.logOCV("No Consecutive id/grade circle , avgCcd calculated from Ans row Top 1st Column ");
@@ -794,6 +841,10 @@ public class CircleHelper {
     }
 
     private void extrapolateOuterIdGradeCircles(double avgCcd, TreeMap<Integer, ArrayList<Circle>> circleMap) {
+        /* if column has only 1 circle
+        * - > extrapolate bottom circle parallel to answer column 2 line
+        * - > if not - > extrapolate top circles by thresholding using avgCCd
+        *  - > extrapolate bottom circles*/
         Line topLine = dotData.getTopLine();
         int len = circleMap.size();
       /*  double height = 0.9 * baseMat.rows();
@@ -865,6 +916,8 @@ public class CircleHelper {
     }
 
     private void filterDuplicateCircles(TreeMap<Integer, ArrayList<Circle>> map) {
+        // filter circles detected due to opencv detecting inner and outer rings
+        // in circles
         for (ArrayList<Circle> list : map.values()) {
             filterDuplicateCirclesFromList(list);
         }
@@ -916,6 +969,7 @@ public class CircleHelper {
     }
 
     public void transformAnswerCircleMap() {
+        /* transform answer map by question no.*/
         int size = circleData.answerCircleMap.size();
         Set<Integer> set = circleData.answerCircleMap.keySet();
         //   Logger.logOCV("Answer map : \n" + circleData.toString());

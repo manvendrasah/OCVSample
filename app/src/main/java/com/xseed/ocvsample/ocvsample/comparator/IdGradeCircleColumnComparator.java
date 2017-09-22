@@ -10,6 +10,7 @@ import java.util.Comparator;
 
 public class IdGradeCircleColumnComparator implements Comparator<Circle> {
 
+    // for sorting in ascending values of y
     @Override
     public int compare(Circle c1, Circle c2) {
         if (c1.center.y < c2.center.y)

@@ -32,7 +32,9 @@ public class DotHelper {
         this.baseMat = baseMat;
         dotData = new DotDS();
         Mat mat = new Mat();
+        // make image grayscale
         Imgproc.cvtColor(baseMat, mat, Imgproc.COLOR_RGB2GRAY);
+        /* do adaptive threshhold on grayscale image to remove shadow effect*/
         Imgproc.adaptiveThreshold(mat, mat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C,
                 Imgproc.THRESH_BINARY, 69, 10);
         bitmap = Bitmap.createBitmap(baseMat.cols(), baseMat.rows(), Config.ARGB_8888);
@@ -42,8 +44,7 @@ public class DotHelper {
         return dotData;
     }
 
-    /* return true if all the 4 corner are detected else false
-    * identify all the four corners of sheet */
+    /* find the corner dots by looping through pixel data */
     public void findBoundaryDots() {
         int hp = (int) (10 * SheetConstants.SIZEFACTOR);
         int wp = (int) (10 * SheetConstants.SIZEFACTOR);

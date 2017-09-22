@@ -10,6 +10,7 @@ import java.util.Comparator;
 
 public class AnswerCircleRowComparator implements Comparator<Circle> {
 
+    // for sorting answer circles by ascending values of x
     @Override
     public int compare(Circle c1, Circle c2) {
         if (c1.center.x < c2.center.x)
