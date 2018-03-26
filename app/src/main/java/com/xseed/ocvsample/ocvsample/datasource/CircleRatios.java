@@ -2,9 +2,6 @@ package com.xseed.ocvsample.ocvsample.datasource;
 
 import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
 import com.xseed.ocvsample.ocvsample.utility.Utility;
-import com.xseed.ocvsample.ocvsample.datasource.DotDS;
-
-import org.opencv.core.Mat;
 
 /**
  * Created by Manvendra Sah on 02/09/17.
@@ -20,10 +17,8 @@ public class CircleRatios {
     public double cw2; // answer block width
     private DotDS dotData;
     private double ratioHorizontalLineLen = 0, ratioVerticalLineLen = 0;
-    private Mat baseMat;
 
-    public CircleRatios(DotDS dotData, Mat baseMat) {
-        this.baseMat = baseMat;
+    public CircleRatios(DotDS dotData) {
         this.dotData = dotData;
         getBottomToTopLineRatio();
         getRightToLeftLineRatio();

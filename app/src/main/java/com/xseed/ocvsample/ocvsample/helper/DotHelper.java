@@ -1,17 +1,15 @@
 package com.xseed.ocvsample.ocvsample.helper;
 
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.v4.graphics.ColorUtils;
 
+import com.xseed.ocvsample.ocvsample.datasource.DotDS;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
 import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
-import com.xseed.ocvsample.ocvsample.datasource.DotDS;
 
-import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -25,21 +23,12 @@ public class DotHelper {
 
     private DotDS dotData;
     private Bitmap bitmap;
-    private Mat baseMat;
     private int searchLength;
 
-    public DotDS findDots(Mat baseMat) {
-        this.baseMat = baseMat;
+    public DotDS findDots(Bitmap bitmap) {
         dotData = new DotDS();
-        Mat mat = new Mat();
-        // make image grayscale
-        Imgproc.cvtColor(baseMat, mat, Imgproc.COLOR_RGB2GRAY);
-        /* do adaptive threshhold on grayscale image to remove shadow effect*/
-        Imgproc.adaptiveThreshold(mat, mat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C,
-                Imgproc.THRESH_BINARY, 69, 10);
-        bitmap = Bitmap.createBitmap(baseMat.cols(), baseMat.rows(), Config.ARGB_8888);
+        this.bitmap = bitmap;
         this.searchLength = bitmap.getWidth() / 3;
-        Utils.matToBitmap(mat, bitmap);
         findBoundaryDots();
         return dotData;
     }

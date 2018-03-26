@@ -2,19 +2,19 @@ package com.xseed.ocvsample.ocvsample.helper;
 
 import android.text.TextUtils;
 
-import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
-import com.xseed.ocvsample.ocvsample.utility.ErrorType;
-import com.xseed.ocvsample.ocvsample.utility.Logger;
-import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
-import com.xseed.ocvsample.ocvsample.utility.Utility;
 import com.xseed.ocvsample.ocvsample.comparator.AnswerCircleColumnComparator;
 import com.xseed.ocvsample.ocvsample.comparator.AnswerCircleRowComparator;
 import com.xseed.ocvsample.ocvsample.comparator.IdGradeCircleColumnComparator;
 import com.xseed.ocvsample.ocvsample.datasource.CircleDS;
+import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
 import com.xseed.ocvsample.ocvsample.datasource.DotDS;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
 import com.xseed.ocvsample.ocvsample.pojo.Line;
 import com.xseed.ocvsample.ocvsample.pojo.OCVCircleConfig;
+import com.xseed.ocvsample.ocvsample.utility.ErrorType;
+import com.xseed.ocvsample.ocvsample.utility.Logger;
+import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
+import com.xseed.ocvsample.ocvsample.utility.Utility;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -43,9 +43,9 @@ public class CircleHelper {
     private double avgAnswerRadius = 0;
     private double avgIdGradeRadius = 0;
     private ArrayList<Circle> circles;
-    private Mat baseMat;
     private CircleDS circleData;
     private DotDS dotData;
+    private int rows, cols;
     private CircleRatios cRatios;
     private int errorType = ErrorType.TYPE0;
 
@@ -53,12 +53,13 @@ public class CircleHelper {
         return circleData;
     }
 
-    public void createDataSource(ArrayList<Circle> circles, Mat baseMat,
+    public void createDataSource(ArrayList<Circle> circles, int rows, int cols,
                                  DotDS dotData, CircleRatios cRatios) {
         this.circles = circles;
-        this.baseMat = baseMat;
         this.cRatios = cRatios;
-        Logger.logOCV("baseMat size > " + baseMat.cols() + "," + baseMat.rows());
+        this.rows = rows;
+        this.cols = cols;
+        Logger.logOCV("baseMat size > " + cols + "," + rows);
         this.dotData = dotData;
         avgAnswerRadius = getAverageRadius(circles);
         cRatios.setAvgAnswerRadius(avgAnswerRadius);
@@ -81,12 +82,7 @@ public class CircleHelper {
         extrapolateIdGradeUndetectedCircles();
     }
 
-    public ArrayList<Circle> findCircles(Mat baseMat) {
-        // Imgproc.equalizeHist(baseMat, baseMat);
-        Mat circleMat = new Mat();
-        Imgproc.cvtColor(baseMat, circleMat, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.GaussianBlur(circleMat, circleMat, new org.opencv.core.Size(3, 3), 4);
-        Imgproc.GaussianBlur(circleMat, circleMat, new org.opencv.core.Size(3, 3), 12);
+    public ArrayList<Circle> findCircles(Mat circleMat) {
         OCVCircleConfig config = new OCVCircleConfig();
         config.dp = 1.4d;
         config.minDist = 25;
@@ -238,8 +234,8 @@ public class CircleHelper {
         double ratioVertLine = cRatios.getRightToLeftLineRatio();
         double ratioHorzLine = cRatios.getBottomToTopLineRatio();
         double changeFactorHorz = Math.abs(ratioHorzLine - 1);
-        double height = baseMat.rows() * 0.7d;
-        double heightDiff = baseMat.rows() * 0.3d;
+        double height = rows * 0.7d;
+        double heightDiff = rows * 0.3d;
         double normHorzMultiplier = 0.95d;
         Logger.logOCV("ratio Vert = " + ratioVertLine + ", horz = " + ratioHorzLine);
 
@@ -384,7 +380,7 @@ public class CircleHelper {
         double ccd = cRatios.getAnswerCirclesCenterDistanceThreshhold();
         double minCcd = 0;
         double ratioLineLen = cRatios.getRightToLeftLineRatio();
-        double width = 0.8 * baseMat.cols();
+        double width = 0.8 * cols;
         double changeFactor = Math.abs(ratioLineLen - 1);
         Logger.logOCV("extrapolateMiddle > ccd = " + ccd + ", ratioLineLen = " + ratioLineLen);
 
@@ -569,7 +565,7 @@ public class CircleHelper {
         while (iter.hasNext()) {
             Circle circle = iter.next();
             int perpendicular = (int) Utility.circleToLineDistance(leftLine, circle);
-            if (perpendicular > baseMat.cols() / 2)
+            if (perpendicular > cols / 2)
                 iter.remove();
             else {
                 circle.leftDist = perpendicular;
@@ -726,7 +722,7 @@ public class CircleHelper {
         Logger.logOCV("extrapolateIdGradeUndetectedCircles >  avgCcd calculation -------------");
         int len = circleData.idCircleMap.size();
 
-        double height = 0.8 * baseMat.rows();
+        double height = 0.8 * rows;
         double ratioLineLen = cRatios.getBottomToTopLineRatio();
 
         double avgCcd = 0;
@@ -847,7 +843,7 @@ public class CircleHelper {
         *  - > extrapolate bottom circles*/
         Line topLine = dotData.getTopLine();
         int len = circleMap.size();
-      /*  double height = 0.9 * baseMat.rows();
+      /*  double height = 0.9 * rows;
         double ratioLineLen = cRatios.getBottomToTopLineRatio();
         double ratioVertLineLen = cRatios.getRightToLeftLineRatio();*/
 
@@ -909,10 +905,10 @@ public class CircleHelper {
         }
     }
 
-    public void drawCirclesOnMat() {
-        circleData.printAnswerCirclesOnMat(baseMat);
-        circleData.printIdCirclesOnMat(baseMat);
-        circleData.printGradeCirclesOnMat(baseMat);
+    public void drawCirclesOnMat(Mat mat) {
+        circleData.printAnswerCirclesOnMat(mat);
+        circleData.printIdCirclesOnMat(mat);
+        circleData.printGradeCirclesOnMat(mat);
     }
 
     private void filterDuplicateCircles(TreeMap<Integer, ArrayList<Circle>> map) {

@@ -3,14 +3,14 @@ package com.xseed.ocvsample.ocvsample.helper;
 import android.graphics.Bitmap;
 import android.support.v4.graphics.ColorUtils;
 
-import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
-import com.xseed.ocvsample.ocvsample.utility.Logger;
-import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
 import com.xseed.ocvsample.ocvsample.datasource.BlobDS;
 import com.xseed.ocvsample.ocvsample.datasource.CircleDS;
+import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
 import com.xseed.ocvsample.ocvsample.datasource.DotDS;
 import com.xseed.ocvsample.ocvsample.pojo.Blob;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
+import com.xseed.ocvsample.ocvsample.utility.Logger;
+import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -30,14 +30,12 @@ public class BlobHelper {
     private DotDS dotData;
     private CircleDS circleData;
     private Bitmap bitmap;
-    private Mat mat;
     private BlobDS blobData;
     private CircleRatios cRatios;
 
-    public BlobHelper(DotDS dotData, CircleDS circleData, Mat mat, Bitmap bitmap, CircleRatios cRatios) {
+    public BlobHelper(DotDS dotData, CircleDS circleData, Bitmap bitmap, CircleRatios cRatios) {
         this.dotData = dotData;
         this.circleData = circleData;
-        this.mat = mat;
         this.cRatios = cRatios;
         this.bitmap = bitmap;
         blobData = new BlobDS();
@@ -123,7 +121,7 @@ public class BlobHelper {
         return ColorUtils.calculateLuminance(color) <= 0.1d;
     }
 
-    public void drawBlobsOnMat() {
+    public void drawBlobsOnMat(Mat mat) {
         for (Blob blob : blobData.gradeBlobs) {
             Imgproc.circle(mat, blob.circle.center, (int) Math.ceil(cRatios.avgIdGradeRadius), new Scalar(10, 255, 10), 2);
             //Imgproc.rectangle(mat, getTopLeftPointOfCircle(blob), getBottomRightPointOfCircle(blob), new Scalar(10, 255, 10), 2);
