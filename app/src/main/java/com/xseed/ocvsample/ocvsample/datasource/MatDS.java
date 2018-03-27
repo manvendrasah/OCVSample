@@ -192,5 +192,6 @@ public class MatDS {
     public void recycleBitmap(Bitmap bitmap) {
         if (bitmap != null && !bitmap.isRecycled())
             bitmap.recycle();
+        bitmap = null;
     }
 }

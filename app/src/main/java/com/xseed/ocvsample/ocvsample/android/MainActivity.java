@@ -25,13 +25,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.xseed.ocvsample.ocvsample.R;
 import com.xseed.ocvsample.ocvsample.camera.AutoFitSurfaceView;
 import com.xseed.ocvsample.ocvsample.camera.CameraView;
+import com.xseed.ocvsample.ocvsample.listener.OMRSheetListener;
+import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
-import com.xseed.ocvsample.ocvsample.listener.OMRSheetListener;
-import com.xseed.ocvsample.ocvsample.R;
-import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
 import com.xseed.ocvsample.ocvsample.utility.Utility;
 
 import java.util.HashMap;
@@ -164,17 +164,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onOMRSheetGradingComplete() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                long dT = System.currentTimeMillis();
-                logScanSucess((dT - sT));
-                camPreview.startPreview();
-                showOverflowMenu(true);
-                hsvFrame.setVisibility(View.VISIBLE);
-                hideProgress();
-            }
-        });
+        long dT = System.currentTimeMillis();
+        logScanSucess((dT - sT));
+        camPreview.startPreview();
+        showOverflowMenu(true);
+        hsvFrame.setVisibility(View.VISIBLE);
+        hideProgress();
     }
 
     private void logScanSucess(long l) {
@@ -185,20 +180,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onOMRSheetGradingFailed(final int errorType) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                long dT = System.currentTimeMillis();
-                showOverflowMenu(true);
-                logScanFailure((dT - sT), errorType);
-                hsvFrame.setVisibility(View.VISIBLE);
-                Toast.makeText(MainActivity.this,
-                        "Sheet Detection FAILED! " + ErrorType.getErrorString(errorType), Toast.LENGTH_LONG).show();
-                Logger.logOCV("Sheet Detection fail > " + ErrorType.getErrorString(errorType));
-                camPreview.startPreview();
-                hideProgress();
-            }
-        });
+        long dT = System.currentTimeMillis();
+        showOverflowMenu(true);
+        logScanFailure((dT - sT), errorType);
+        hsvFrame.setVisibility(View.VISIBLE);
+        Toast.makeText(MainActivity.this,
+                "Sheet Detection FAILED! " + ErrorType.getErrorString(errorType), Toast.LENGTH_LONG).show();
+        Logger.logOCV("Sheet Detection fail > " + ErrorType.getErrorString(errorType));
+        camPreview.startPreview();
+        hideProgress();
     }
 
     private void logScanFailure(long l, int errorType) {
@@ -211,17 +201,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onOMRSheetBitmap(final Bitmap bitmap, final String name) {
         Utility.storeImage(bitmap, name);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                View view = inflater.inflate(R.layout.layout_frame, null);
-                ImageView ivFrame = (ImageView) view.findViewById(R.id.ivFrame);
-                TextView tvName = (TextView) view.findViewById(R.id.tv_frame_name);
-                ivFrame.setImageBitmap(bitmap);
-                tvName.setText(name);
-                llContainer.addView(view, 0);
-            }
-        });
+        View view = inflater.inflate(R.layout.layout_frame, null);
+        ImageView ivFrame = (ImageView) view.findViewById(R.id.ivFrame);
+        TextView tvName = (TextView) view.findViewById(R.id.tv_frame_name);
+        ivFrame.setImageBitmap(bitmap);
+        tvName.setText(name);
+        llContainer.addView(view, 0);
     }
 
     public void showProgress() {
@@ -290,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void onPictureSize(int width) {
-        int side = /*pictureSize.height /*/ width / SheetConstants.SEARCH_LENGTH_DIVISOR;
+        int side = /*pictureSize.height /*/ width / Constants.VIEWFINDER_MULTIPLIER;
         Logger.logOCV("ViewFinder side = " + side);
         ImageView iv;
         FrameLayout.LayoutParams params;

@@ -1,11 +1,7 @@
 package com.xseed.ocvsample.ocvsample.listener;
 
 import android.content.Context;
-import android.hardware.Camera;
-import android.os.Handler;
-import android.view.Surface;
 
-import com.xseed.ocvsample.ocvsample.android.MainActivity;
 import com.xseed.ocvsample.ocvsample.datasource.CircleDS;
 import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
 import com.xseed.ocvsample.ocvsample.datasource.DotDS;
@@ -14,16 +10,10 @@ import com.xseed.ocvsample.ocvsample.helper.BlobHelper;
 import com.xseed.ocvsample.ocvsample.helper.CircleHelper;
 import com.xseed.ocvsample.ocvsample.helper.DotHelper;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
-import com.xseed.ocvsample.ocvsample.pojo.FrameModel;
 import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
 import com.xseed.ocvsample.ocvsample.utility.SheetConstants;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.InstallCallbackInterface;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
 
 import java.util.ArrayList;
 
@@ -31,131 +21,50 @@ import java.util.ArrayList;
  * Created by Manvendra Sah on 16/06/17.
  */
 
-public class FrameListener implements Camera.PictureCallback {
+public class FrameListener extends AbstractFrameListener {
 
-    private Context mContext = null;
-    private OMRSheetListener mSheetListener;
-
-    private FrameModel frame;
-    private long dT;
-    Handler handler = new Handler();
     ArrayList<Circle> circles = new ArrayList<Circle>();
     protected int operations;
     protected int circleThreadCount;
-    private CircleDS circleData;
+
+    private CircleDS circleData; // datasource for circles detected
+    private DotDS dotData;  // datasource for boundary dots
+    private MatDS matDS;  // datasource for all mat and bitmap variables
+
     private CircleHelper circleHelper;
     private DotHelper dotHelper;
-    private DotDS dotData;
     private BlobHelper blobHelper;
-    private CircleRatios cRatios;
-    private MatDS matDS;
 
+    private CircleRatios cRatios;
 
     public FrameListener(Context context) {
         mContext = context;
     }
 
-    public void startProcessingFrame() {
-        if (mContext instanceof OMRSheetListener)
-            mSheetListener = (OMRSheetListener) mContext;
-    }
-
     @Override
-    public void onPictureTaken(final byte[] data, Camera camera) {
+    protected void refreshStateVariables() {
         circles = new ArrayList<>();
         operations = 0;
         circleThreadCount = 0;
-        dT = System.currentTimeMillis();
         matDS = new MatDS();
         circleHelper = new CircleHelper();
-        //  lineHelper = new LineHelper();
         dotHelper = new DotHelper();
-        Camera.Parameters parameters = camera.getParameters();
-        FrameModel fModel = new FrameModel(data);
-        fModel.setPreviewWidth(parameters.getPreviewSize().width);
-        fModel.setPreviewHeight(parameters.getPreviewSize().height);
-        fModel.setRotation(getRotation());
-        validateFrame(fModel);
     }
 
-    private int getRotation() {
-        Camera.CameraInfo info =
-                new Camera.CameraInfo();
-        Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, info);
-        int degrees = 0;
-        int rotation = ((MainActivity) mContext).getWindowManager().getDefaultDisplay()
-                .getRotation();
-        switch (rotation) {
-            case Surface.ROTATION_0:
-                degrees = 0;
-                break;
-            case Surface.ROTATION_90:
-                degrees = 90;
-                break;
-            case Surface.ROTATION_180:
-                degrees = 180;
-                break;
-            case Surface.ROTATION_270:
-                degrees = 270;
-                break;
-            default:
-                degrees = 0;
-                break;
-        }
-        int result;
-        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            result = (info.orientation + degrees) % 360;
-            result = (360 - result) % 360;  // compensate the mirror
-        } else {  // back-facing
-            result = (info.orientation - degrees + 360) % 360;
-        }
-        return result;
-    }
-
-    private void validateFrame(FrameModel frame) {
-        this.frame = frame;
-        initialzeOpenCv(mContext);
-    }
-
-    private void initialzeOpenCv(Context context) {
-        if (OpenCVLoader.initDebug()) {
-            Logger.logOCV("OpenCv Sucess > " + (System.currentTimeMillis() - dT));
-            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        } else {
-            Logger.logOCV("OpenCv Fail");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_3_0, context, baseLoaderCallback);
+    @Override
+    protected void onOpencvLibraryLoaded() {
+        if (frame != null) {
+            matDS.createBaseBitmap(frame);
+            Logger.logOCV("time > getBitmapFromByte =  " + (System.currentTimeMillis() - dT));
+            matDS.createBaseMat(frame);
+            Logger.logOCV("time > getBaseRotatedMat =  " + (System.currentTimeMillis() - dT));
+            findCircles();
+            prepareMatForBlobDetection();
         }
     }
 
-    private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(mContext) {
-        @Override
-        public void onManagerConnected(int status) {
-            super.onManagerConnected(status);
-            switch (status) {
-                case BaseLoaderCallback.SUCCESS:
-                    Logger.logOCV("onManagerConnected() > = " + (System.currentTimeMillis() - dT));
-                    if (frame != null) {
-                        matDS.createBaseBitmap(frame);
-                        Logger.logOCV(" getBitmapFromByte =  " + (System.currentTimeMillis() - dT));
-                        matDS.createBaseMat(frame);
-                        Logger.logOCV(" getRotatedMat =  " + (System.currentTimeMillis() - dT));
-                        findCircles();
-                        prepareMatForBlobDetection();
-                    }
-                default:
-                    super.onManagerConnected(status);
-                    break;
-            }
-        }
-
-        @Override
-        public void onPackageInstall(int operation, InstallCallbackInterface callback) {
-            super.onPackageInstall(operation, callback);
-        }
-    };
-
-    /* create grayscale mat with adaptive threshhold applied to remove shadows
-    * - > get bitmap for blob detection after all circles and dots are found*/
+    /* create grayscale mat with adaptive thresh-hold applied to remove shadows
+        * - > get bitmap for blob detection after all circles and dots are found*/
     private void prepareMatForBlobDetection() {
         new Thread() {
             @Override
@@ -166,11 +75,11 @@ public class FrameListener implements Camera.PictureCallback {
                     @Override
                     public void run() {
                         findBoundaryDots();
-                        if (mSheetListener != null && Constants.IS_DEBUG)
-                            mSheetListener.onOMRSheetBitmap(matDS.getBitmapWithAdaptiveThreshToDraw(), "AdaptThresh");
+                        if (Constants.IS_DEBUG)
+                            postBitmap(matDS.getBitmapWithAdaptiveThreshToDraw(), AbstractFrameListener.TAG_ADAPTIVE_THRESHHOLD);
                     }
                 });
-                Logger.logOCV("Mat created for blob detection > " + "time : " + (System.currentTimeMillis() - dT));
+                Logger.logOCV("time > Mat created for blob detection > " + (System.currentTimeMillis() - dT));
             }
         }.start();
     }
@@ -182,17 +91,20 @@ public class FrameListener implements Camera.PictureCallback {
             public void run() {
                 super.run();
                 dotData = dotHelper.findDots(matDS.getBitmapForDotDetection());
-                Logger.logOCV("boundaryDots = " + dotData.toString() + ", time : " + (System.currentTimeMillis() - dT));
+                Logger.logOCV("boundaryDots = " + dotData.toString());
+                Logger.logOCV("time > boundary dots detected : " + (System.currentTimeMillis() - dT));
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        onDotsDetection(dotData);
+                        onDotsDetection();
                     }
                 });
             }
         }.start();
     }
 
+    /*    divide image into two halves and do circle detection parallelly
+        then combine circles detected*/
     private void findCircles() {
         operations++;
         new Thread(new Runnable() {
@@ -201,6 +113,7 @@ public class FrameListener implements Camera.PictureCallback {
                 circleThreadCount++;
                 ArrayList<Circle> topHalfCircles = circleHelper.findCircles(matDS.getTopHalfMat());
                 Logger.logOCV("top Half circles = " + circles.size() + "\n");
+                Logger.logOCV("time > top circles detected : " + (System.currentTimeMillis() - dT));
                 onHalfCircles(topHalfCircles);
             }
         }).start();
@@ -210,6 +123,7 @@ public class FrameListener implements Camera.PictureCallback {
                 circleThreadCount++;
                 ArrayList<Circle> bottomHalfCircles = circleHelper.findCircles(matDS.getBottomHalfMat());
                 Logger.logOCV("bottom Half circles = " + circles.size());
+                Logger.logOCV("time > bottom circles detected : " + (System.currentTimeMillis() - dT));
                 normalizeHalfCircles(bottomHalfCircles, (int) (matDS.getBaseMat().rows() * MatDS.PART_MULTIPLIER1));
                 onHalfCircles(bottomHalfCircles);
             }
@@ -225,39 +139,36 @@ public class FrameListener implements Camera.PictureCallback {
     private synchronized void onHalfCircles(ArrayList<Circle> circles) {
         circleThreadCount--;
         this.circles.addAll(circles);
-        Logger.logOCV("total circles = " + circles.size());
         if (circleThreadCount <= 0)
             onBothHalvesCircles();
     }
 
     private synchronized void onBothHalvesCircles() {
-        Logger.logOCV("onBothHalvesCircles = " + circles.size());
         if (Constants.IS_DEBUG) {
             circleHelper.drawCirclesOnMat(circles, matDS.getCircleMatToDraw());
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (mSheetListener != null)
-                        mSheetListener.onOMRSheetBitmap(matDS.getCircleBitmapToDraw(), "InitialCircles");
+                    postBitmap(matDS.getCircleBitmapToDraw(), TAG_INITIAL_CIRCLES);
                 }
             });
         }
-        Logger.logOCV("circles = " + circles.size() + "   time =  " + (System.currentTimeMillis() - dT));
+        Logger.logOCV("total circles = " + circles.size());
+        Logger.logOCV("time > total circles detected : " + (System.currentTimeMillis() - dT));
         handler.post(new Runnable() {
             @Override
             public void run() {
-                onCircleDetection(circles);
+                onCircleDetection();
             }
         });
     }
 
-    public void onCircleDetection(ArrayList<Circle> list) {
-        this.circles = list;
+    public void onCircleDetection() {
         operations--;
         checkOperationCount();
     }
 
-    public void onDotsDetection(DotDS data) {
+    public void onDotsDetection() {
         operations--;
         checkOperationCount();
     }
@@ -265,42 +176,27 @@ public class FrameListener implements Camera.PictureCallback {
     private void checkOperationCount() {
         if (operations <= 0) {
             if (!dotData.isValid()) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mSheetListener != null)
-                            mSheetListener.onOMRSheetGradingFailed(ErrorType.TYPE1);
-                    }
-                });
+                postError(ErrorType.TYPE1);
                 return;
             }
             cRatios = new CircleRatios(dotData);
             Logger.logOCV(cRatios.toString());
             if (!cRatios.areValidLineRatios()) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mSheetListener != null)
-                            mSheetListener.onOMRSheetGradingFailed(ErrorType.TYPE2);
-                    }
-                });
+                postError(ErrorType.TYPE2);
                 return;
             }
             int numCircles = circles.size();
             if (numCircles < SheetConstants.MIN_DETECTED_CIRCLES) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mSheetListener != null)
-                            mSheetListener.onOMRSheetGradingFailed(ErrorType.TYPE3);
-                    }
-                });
+                postError(ErrorType.TYPE3);
                 return;
             }
             getCircleData();
         }
     }
 
+    /*
+        create circle datasource and start detecting marked answers/grades
+    */
     private void getCircleData() {
         new Thread() {
             @Override
@@ -308,14 +204,7 @@ public class FrameListener implements Camera.PictureCallback {
                 super.run();
                 circleHelper.createDataSource(circles, matDS.getBaseMat().rows(), matDS.getBaseMat().cols(), dotData, cRatios);
                 if (circleHelper.isError()) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mSheetListener != null) {
-                                mSheetListener.onOMRSheetGradingFailed(circleHelper.getError());
-                            }
-                        }
-                    });
+                    postError(circleHelper.getError());
                     return;
                 }
                 circleData = circleHelper.getCircleData();
@@ -331,10 +220,8 @@ public class FrameListener implements Camera.PictureCallback {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (mSheetListener != null) {
-                            mSheetListener.onOMRSheetBitmap(matDS.getAnswerBitmapToDraw(), "BlobDetect");
-                            mSheetListener.onOMRSheetGradingComplete();
-                        }
+                        postBitmap(matDS.getAnswerBitmapToDraw(), TAG_BLOBS_DETECTED);
+                        postSuccess();
                     }
                 });
                 Logger.logOCV("circle&Line time = " + (System.currentTimeMillis() - dT));
@@ -351,17 +238,13 @@ public class FrameListener implements Camera.PictureCallback {
                     dotHelper.drawLinesOnMat(matDS.getElementMat());
                     circleHelper.drawCirclesOnMat(matDS.getElementMat());
                     dotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
-                    if (mSheetListener != null)
-                        mSheetListener.onOMRSheetBitmap(matDS.getElementBitmap(), "DotNCircle");
+                    postBitmap(matDS.getElementBitmap(), TAG_ELEMENTS);
                 }
             }.start();
         }
     }
 
-    public void shutDown() {
-        mSheetListener = null;
-    }
-
+    @Override
     public void recycleFrames() {
         matDS.release();
     }

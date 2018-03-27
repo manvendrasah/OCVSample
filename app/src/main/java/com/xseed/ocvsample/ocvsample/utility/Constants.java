@@ -6,5 +6,6 @@ package com.xseed.ocvsample.ocvsample.utility;
 
 public class Constants {
     public static final boolean IS_DEBUG = true;
+    public static final int VIEWFINDER_MULTIPLIER = 4;
 
 }
