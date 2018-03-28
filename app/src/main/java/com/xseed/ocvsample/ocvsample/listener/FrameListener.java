@@ -4,11 +4,13 @@ import android.content.Context;
 
 import com.xseed.ocvsample.ocvsample.datasource.CircleDS;
 import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
-import com.xseed.ocvsample.ocvsample.datasource.DotDS;
 import com.xseed.ocvsample.ocvsample.datasource.MatDS;
-import com.xseed.ocvsample.ocvsample.helper.BlobHelper;
-import com.xseed.ocvsample.ocvsample.helper.CircleHelper;
-import com.xseed.ocvsample.ocvsample.helper.DotHelper;
+import com.xseed.ocvsample.ocvsample.datasource.PrimaryDotDS;
+import com.xseed.ocvsample.ocvsample.datasource.SecondaryDotDS;
+import com.xseed.ocvsample.ocvsample.helper.blob.BlobHelper;
+import com.xseed.ocvsample.ocvsample.helper.circle.CircleHelper;
+import com.xseed.ocvsample.ocvsample.helper.dot.PrimaryDotHelper;
+import com.xseed.ocvsample.ocvsample.helper.dot.SecondaryDotHelper;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
 import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
@@ -28,11 +30,13 @@ public class FrameListener extends AbstractFrameListener {
     protected int circleThreadCount;
 
     private CircleDS circleData; // datasource for circles detected
-    private DotDS dotData;  // datasource for boundary dots
+    private PrimaryDotDS primaryDotData;  // datasource for boundary dots
+    private SecondaryDotDS secondaryDotData;  // datasource for identity dots
     private MatDS matDS;  // datasource for all mat and bitmap variables
 
     private CircleHelper circleHelper;
-    private DotHelper dotHelper;
+    private PrimaryDotHelper primaryDotHelper;
+    private SecondaryDotHelper secondaryDotHelper;
     private BlobHelper blobHelper;
 
     private CircleRatios cRatios;
@@ -48,7 +52,7 @@ public class FrameListener extends AbstractFrameListener {
         circleThreadCount = 0;
         matDS = new MatDS();
         circleHelper = new CircleHelper();
-        dotHelper = new DotHelper();
+        primaryDotHelper = new PrimaryDotHelper();
     }
 
     @Override
@@ -90,13 +94,33 @@ public class FrameListener extends AbstractFrameListener {
             @Override
             public void run() {
                 super.run();
-                dotData = dotHelper.findDots(matDS.getBitmapForDotDetection());
-                Logger.logOCV("boundaryDots = " + dotData.toString());
+                primaryDotData = primaryDotHelper.findDots(matDS.getBitmapForDotDetection());
+                Logger.logOCV("boundaryDots = " + primaryDotData.toString());
                 Logger.logOCV("time > boundary dots detected : " + (System.currentTimeMillis() - dT));
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        onDotsDetection();
+                        onBoundaryDotsDetection();
+                    }
+                });
+            }
+        }.start();
+    }
+
+    private void findIdentityDots() {
+        operations++;
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                secondaryDotHelper = new SecondaryDotHelper(primaryDotData);
+                secondaryDotHelper.setTheoreticalIdentityDots();
+//                Logger.logOCV("identityDots = " + secondaryDotData.toString());
+                Logger.logOCV("time > identity dots detected : " + (System.currentTimeMillis() - dT));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onIdentityDotsDetection();
                     }
                 });
             }
@@ -168,18 +192,24 @@ public class FrameListener extends AbstractFrameListener {
         checkOperationCount();
     }
 
-    public void onDotsDetection() {
+    public void onBoundaryDotsDetection() {
+        operations--;
+        findIdentityDots();
+        checkOperationCount();
+    }
+
+    public void onIdentityDotsDetection() {
         operations--;
         checkOperationCount();
     }
 
     private void checkOperationCount() {
         if (operations <= 0) {
-            if (!dotData.isValid()) {
+            if (!primaryDotData.isValid()) {
                 postError(ErrorType.TYPE1);
                 return;
             }
-            cRatios = new CircleRatios(dotData);
+            cRatios = new CircleRatios(primaryDotData);
             Logger.logOCV(cRatios.toString());
             if (!cRatios.areValidLineRatios()) {
                 postError(ErrorType.TYPE2);
@@ -202,7 +232,7 @@ public class FrameListener extends AbstractFrameListener {
             @Override
             public void run() {
                 super.run();
-                circleHelper.createDataSource(circles, matDS.getBaseMat().rows(), matDS.getBaseMat().cols(), dotData, cRatios);
+                circleHelper.createDataSource(circles, matDS.getBaseMat().rows(), matDS.getBaseMat().cols(), primaryDotData, cRatios);
                 if (circleHelper.isError()) {
                     postError(circleHelper.getError());
                     return;
@@ -212,7 +242,7 @@ public class FrameListener extends AbstractFrameListener {
                 circleHelper.transformAnswerCircleMap();
                 Logger.logOCV("blob detection START time = " + (System.currentTimeMillis() - dT));
 
-                blobHelper = new BlobHelper(dotData, circleData, matDS.getBitmapForBlobDetection(), cRatios);
+                blobHelper = new BlobHelper(primaryDotData, circleData, matDS.getBitmapForBlobDetection(), cRatios);
                 blobHelper.findBlobsInCircles();
                 Logger.logOCV("blob detection END time = " + (System.currentTimeMillis() - dT));
                 blobHelper.drawBlobsOnMat(matDS.getAnswerMatToDraw());
@@ -235,9 +265,10 @@ public class FrameListener extends AbstractFrameListener {
                 @Override
                 public void run() {
                     super.run();
-                    dotHelper.drawLinesOnMat(matDS.getElementMat());
+                    primaryDotHelper.drawLinesOnMat(matDS.getElementMat());
                     circleHelper.drawCirclesOnMat(matDS.getElementMat());
-                    dotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
+                    primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
+                    secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
                     postBitmap(matDS.getElementBitmap(), TAG_ELEMENTS);
                 }
             }.start();

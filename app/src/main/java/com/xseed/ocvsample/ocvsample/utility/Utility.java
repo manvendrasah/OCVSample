@@ -9,6 +9,7 @@ import android.os.Environment;
 
 import com.xseed.ocvsample.ocvsample.android.MyApplication;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
+import com.xseed.ocvsample.ocvsample.pojo.Dot;
 import com.xseed.ocvsample.ocvsample.pojo.Line;
 
 import org.opencv.core.Point;
@@ -379,5 +380,13 @@ public class Utility {
         Circle newCircle = new Circle(p.x, p.y, avgRadius);
         newCircle.isExtrapolated = true;
         return newCircle;
+    }
+
+    /* get dot at distance "disD1" from Dot d1
+     * total distance between Dot d1 & d2 is  "totalDistD1D2"*/
+    public static Dot getDotBetweenDots(Dot d1, Dot d2, int disD1, int totalDistD1D2) {
+        double x = d1.x * (totalDistD1D2 - disD1) / totalDistD1D2 + d2.x * disD1 / totalDistD1D2;
+        double y = d1.y * (totalDistD1D2 - disD1) / totalDistD1D2 + d2.y * disD1 / totalDistD1D2;
+        return new Dot(x, y);
     }
 }

@@ -76,6 +76,14 @@ public class SheetConstants {
     public static final double THRESHHOLD_PERPENDICULAR_VERTICAL = 1.5d;
     public static final double THRESHHOLD_PERPENDICULAR_HORIZONTAL_ID = 1.5d;
     public static final double THRESHHOLD_PERPENDICULAR_HORIZONTAL_GRADE = 2.5d;
-
-
+    /*
+        Pixel value for distances between seconday DOTS' CENTERS to their closest primary dots' centers
+    */
+    public static final int DIST_LEFT_RIGHT = 426;// distance between top left and top right dots
+    public static final int DIST_TOP_BOTTOM = 565;// distance between top left and bottom left dots
+    public static final int DIST_TLLEFT = 40; // distance of (secondary) top line left dot from top left (primary) dot
+    public static final int DIST_TLRIGHT = 26;// distance of (secondary) top line right dot from top right (primary) dot
+    public static final int DIST_LLTOP = 51;// distance of (secondary) left line top dot from top left (primary) dot
+    public static final int DIST_LLMID = 272;// distance of (secondary)left line mid dot from top left (primary) dot
+    public static final int DIST_LLBOTTOM = 34;// distance of (secondary)left line bottom dot from bottom left (primary) dot
 }

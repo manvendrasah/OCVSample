@@ -15,10 +15,10 @@ public class CircleRatios {
     public double dh; // horizontal distance of first circle from vertical column line
     public double cw; // answer block width
     public double cw2; // answer block width
-    private DotDS dotData;
+    private PrimaryDotDS dotData;
     private double ratioHorizontalLineLen = 0, ratioVerticalLineLen = 0;
 
-    public CircleRatios(DotDS dotData) {
+    public CircleRatios(PrimaryDotDS dotData) {
         this.dotData = dotData;
         getBottomToTopLineRatio();
         getRightToLeftLineRatio();
