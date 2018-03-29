@@ -103,28 +103,33 @@ public class FrameListener extends AbstractFrameListener {
                         onBoundaryDotsDetection();
                     }
                 });
+                if (primaryDotData.isValid())
+                    findIdentityDots();
             }
         }.start();
     }
 
     private void findIdentityDots() {
         operations++;
-        new Thread() {
+      /*  new Thread() {
             @Override
             public void run() {
-                super.run();
-                secondaryDotHelper = new SecondaryDotHelper(primaryDotData);
-                secondaryDotHelper.setTheoreticalIdentityDots();
-//                Logger.logOCV("identityDots = " + secondaryDotData.toString());
-                Logger.logOCV("time > identity dots detected : " + (System.currentTimeMillis() - dT));
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onIdentityDotsDetection();
-                    }
-                });
+                super.run();*/
+        secondaryDotHelper = new SecondaryDotHelper(primaryDotData, matDS.getBitmapForDotDetection());
+        secondaryDotHelper.setTheoreticalIdentityDots();
+        Logger.logOCV("time > theoretical identity dots detected : " + (System.currentTimeMillis() - dT));
+        Logger.logOCV("Theoretical Identity Dots = " + secondaryDotHelper.getTheoreticalIdentityDots().toString());
+        secondaryDotData = secondaryDotHelper.searchForDots();
+//                Logger.logOCV("Calculated Identity Dots = " + secondaryDotHelper.getCalculatedIdentityDots().toString());
+        Logger.logOCV("time > identity dots detected : " + (System.currentTimeMillis() - dT));
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                onIdentityDotsDetection();
             }
-        }.start();
+        });
+            /*}
+        }.start();*/
     }
 
     /*    divide image into two halves and do circle detection parallelly
@@ -194,7 +199,7 @@ public class FrameListener extends AbstractFrameListener {
 
     public void onBoundaryDotsDetection() {
         operations--;
-        findIdentityDots();
+//        findIdentityDots();
         checkOperationCount();
     }
 
@@ -213,6 +218,10 @@ public class FrameListener extends AbstractFrameListener {
             Logger.logOCV(cRatios.toString());
             if (!cRatios.areValidLineRatios()) {
                 postError(ErrorType.TYPE2);
+                return;
+            }
+            if (!secondaryDotData.isValid()) {
+                postError(ErrorType.TYPE9);
                 return;
             }
             int numCircles = circles.size();
@@ -268,7 +277,8 @@ public class FrameListener extends AbstractFrameListener {
                     primaryDotHelper.drawLinesOnMat(matDS.getElementMat());
                     circleHelper.drawCirclesOnMat(matDS.getElementMat());
                     primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
-                    secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
+//                    secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
+                    secondaryDotHelper.drawCalculatedIdentityDots(matDS.getElementBitmap());
                     postBitmap(matDS.getElementBitmap(), TAG_ELEMENTS);
                 }
             }.start();

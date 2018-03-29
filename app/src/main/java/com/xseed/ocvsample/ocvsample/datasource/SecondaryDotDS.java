@@ -93,17 +93,6 @@ public class SecondaryDotDS {
         }
         return bottomLine;
     }
-/*
-    public void setPrimaryDotDS(PrimaryDotDS primaryDotDS) {
-        this.primaryDotDS = primaryDotDS;
-    }
-
-   public boolean isValid() {
-        if (primaryDotDS == null)
-            return false;
-        // TODO for identification, compare with theoretically calculated points
-        return true;
-    }*/
 
     @Override
     public String toString() {
@@ -119,5 +108,10 @@ public class SecondaryDotDS {
                 ", llMid=" + llMid +
                 ", llTop=" + llTop +
                 '}';
+    }
+
+    public boolean isValid() {
+        return tlLeft != null && tlRight != null && llTop != null && llMid != null && llBottom != null
+                && blLeft != null && blRight != null && rlTop != null && rlMid != null && rlBottom != null;
     }
 }
