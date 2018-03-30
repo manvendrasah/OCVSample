@@ -89,7 +89,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
     }
 
     private void setConstants() {
-        loopVar = 10 * (int) SheetConstants.SIZEFACTOR;
+        loopVar = 5 * (int) SheetConstants.SIZEFACTOR;
         hp = (int) (10 * SheetConstants.SIZEFACTOR);
         wp = (int) (10 * SheetConstants.SIZEFACTOR);
         ap = hp * wp;
@@ -102,6 +102,12 @@ public class SecondaryDotHelper extends BaseDotHelper {
         Dot dot = findDot(thDot, 2, 2);
         if (dot == null)
             dot = findDot(thDot, 4, 4);
+        if (dot == null)
+            dot = findDot(thDot, 6, 6);
+        if (dot == null)
+            dot = findDot(thDot, 8, 8);
+        if (dot == null)
+            dot = findDot(thDot, 12, 12);
         return dot;
     }
 
@@ -111,9 +117,13 @@ public class SecondaryDotHelper extends BaseDotHelper {
         if (dot == null)
             dot = findDot(thDot, 4, 4);
         if (dot == null)
-            dot = findDot(thDot, 6, 4);
+            dot = findDot(thDot, 6, 6);
         if (dot == null)
-            dot = findDot(thDot, 8, 4);
+            dot = findDot(thDot, 8, 8);
+        if (dot == null)
+            dot = findDot(thDot, 12, 8);
+        if (dot == null)
+            dot = findDot(thDot, 16, 12);
         return dot;
     }
 
@@ -137,13 +147,14 @@ public class SecondaryDotHelper extends BaseDotHelper {
 //                Logger.logOCV("Dot > Inside1 > " + x + "," + y );
                 if (!setSquarePixel.contains(key) && x > 0 && y > 0 && x < bitmapWidth && y < bitmapHeight
                         && isColorDark(bitmap.getPixel(x, y))) {
-                    Logger.logOCV("Dot > Inside1 > " + x + "," + y);
-                    if ((getDarknessBoubleCount(bitmap, hp, wp, y, x) > 0.5 * ap)) {
+                    double darkness = getDarknessBoubleCount(bitmap, hp, wp, y, x);
+                    Logger.logOCV("Dot > Inside1 > " + x + "," + y + ", darkness = " + darkness);
+                    if (darkness > 0.5 * ap) {
                         Point point = getCentreToMaxMatrix(bitmap, hp, y, x, false);
                         Logger.logOCV("Dot > Point > " + point.x + "," + point.y);
                         return new Dot(point.x, point.y);
                     } else {
-//                        Logger.logOCV("Dot > NOT DARK > " + x + "," + y);
+                        Logger.logOCV("Dot > NOT DARK > " + x + "," + y + "  0.5ap = " + (0.5 * ap));
                         setSquarePixel.add(key);
                     }
                 }

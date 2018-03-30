@@ -15,7 +15,6 @@ import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
@@ -60,142 +59,38 @@ public class CircleHelper extends AbstractCircleHelper {
 
     @Override
     protected boolean extrapolateOuterAnswerUndetectedCircles() {
-        /* Extrapolate outermost left/right circles in each row by measuring distance of left/most detected circles
-        * from left/right lines
-        *  - distance is normalised by top/bottom or left/right line ratios
-        * */
-        double ratioVertLine = cRatios.getRightToLeftLineRatio();
-        double ratioHorzLine = cRatios.getBottomToTopLineRatio();
-        double changeFactorHorz = Math.abs(ratioHorzLine - 1);
-        double height = rows * 0.7d;
-        double heightDiff = rows * 0.3d;
-        double normHorzMultiplier = 0.95d;
-        Logger.logOCV("ratio Vert = " + ratioVertLine + ", horz = " + ratioHorzLine);
-
-        Line leftLine = dotData.getLeftLine();
-        double threshLeft0 = cRatios.getAnswerCirclesLeftPerpendicularThreshhold(0);
-        double threshLeft1 = cRatios.getAnswerCirclesLeftPerpendicularThreshhold(1);
-        double threshLeftVertNorm0 = (threshLeft0 * normHorzMultiplier) / ratioVertLine;
-        double threshLeftVertNorm1 = (threshLeft1 * normHorzMultiplier) / ratioVertLine;
-        Logger.logOCV("threshL Vert > " + threshLeft0 + ", " + threshLeft1);
-        /* contains indices of rows with leftmost circles detected*/
-        ArrayList<Integer> leftMost = new ArrayList<>();
-
+        Line leftLine = secondaryDotDS.getLeftLine();
+        Line rightLine = secondaryDotDS.getRightLine();
         for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
             ArrayList<Circle> row = circleData.answerCircleMap.get(k);
-            if (row.size() < 2) {
+            int rowSize = row.size();
+            if (rowSize < 2) {
                 errorType = ErrorType.TYPE4;
                 return false;
             }
-            Circle circle1 = row.get(0);
-            double perpL = Utility.circleToLineDistance(leftLine, circle1);
-            double centerY = circle1.center.y;
-            double changeFactorY = (centerY - heightDiff) * changeFactorHorz / height;
-            double ratioHorzNorm = (ratioHorzLine > 1 ? (1 + changeFactorY) : (1 - changeFactorY));
-            double threshLeftHorzNorm0 = threshLeft0 * ratioHorzNorm * normHorzMultiplier;
-            double threshLeftHorzNorm1 = threshLeft1 * ratioHorzNorm * normHorzMultiplier;
-            Logger.logOCV("perpL > " + k + " > " + perpL + ", threshNorm0 > vert = " + threshLeftVertNorm0 + ", horz = " + threshLeftHorzNorm0);
-            if (perpL < Math.min(threshLeftVertNorm0, threshLeftHorzNorm0))
-                leftMost.add(k);
-            /*else if (perpL > threshLeft0 && perpL < threshLeft1 && row.size() > 1) {
-                Circle circle2 = row.get(1);
-                Circle newCircle = Utility.getCircleToLeft(circle1, circle2, avgRadius);
-                circleData.answerCircleMap.get(k).add(0, newCircle);
-                Logger.logOCV("extrapolateOuter Left > " + k + " > added at pos 0");
-                leftMost.add(k);
-            }*/
-        }
-        Collections.sort(leftMost);
-        Logger.logOCV("leftMost > " + leftMost.toString());
-
-        Line rightLine = dotData.getRightLine();
-        double threshRight0 = cRatios.getAnswerCirclesRightPerpendicularThreshhold(0);
-        double threshRight1 = cRatios.getAnswerCirclesRightPerpendicularThreshhold(1);
-        double threshRightVertNorm0 = threshRight0 * ratioVertLine * normHorzMultiplier;
-        double threshRightVertNorm1 = threshRight1 * ratioVertLine * normHorzMultiplier;
-        Logger.logOCV("threshR Vert > " + threshRight0 + ", " + threshRight1);
-        /* contains indices of rows with rightmost circles detected*/
-        ArrayList<Integer> rightMost = new ArrayList<>();
-
-        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
-            ArrayList<Circle> row = circleData.answerCircleMap.get(k);
-            int len = row.size();
-            Circle circle1 = row.get(len - 1);
-            double perpR = Utility.circleToLineDistance(rightLine, circle1);
-            double centerY = circle1.center.y;
-            double changeFactorY = (centerY - heightDiff) * changeFactorHorz / height;
-            double ratioHorzNorm = (ratioHorzLine > 1 ? (1 + changeFactorY) : (1 - changeFactorY));
-            double threshRightHorzNorm0 = threshRight0 * ratioHorzNorm * normHorzMultiplier;
-            double threshRightHorzNorm1 = threshRight1 * ratioHorzNorm * normHorzMultiplier;
-            Logger.logOCV("perpL > " + k + " > " + perpR + ", threshNorm0 > vert = " + threshRightVertNorm0 + ", horz = " + threshRightHorzNorm0);
-            if (perpR < Math.min(threshRightVertNorm0, threshRightHorzNorm0))
-                rightMost.add(k);
-           /* else if (perpR > threshRight0 && perpR < threshRight1 && len > 1) {
-                Circle circle2 = row.get(len - 2);
-                Circle newCircle = Utility.getCircleToRight(circle1, circle2, avgRadius);
-                circleData.answerCircleMap.get(k).add(len, newCircle);
-                Logger.logOCV("extrapolateOuter Right> " + k + " > added at pos " + len);
-                rightMost.add(k);
-            }*/
-        }
-        Collections.sort(rightMost);
-        Logger.logOCV("rightMost > " + rightMost.toString());
-
-        /*if no two rows have left/rightmost detected circles, extrapolation cant be done and error is thrown*/
-        int sizeLeft = leftMost.size();
-        int sizeRight = rightMost.size();
-        if (sizeLeft < 2 || sizeRight < 2) {
-            errorType = ErrorType.TYPE5;
-            return false;
-        }
-
-        // extrapolate leftmost & rightmost line
-        boolean canExtraPolateLeft = leftMost.size() > 1;
-        Line exLeftLine = null;
-        if (canExtraPolateLeft) {
-            Circle leftTop = circleData.answerCircleMap.get(leftMost.get(0)).get(0);
-            Circle leftBottom = circleData.answerCircleMap.get(leftMost.get(leftMost.size() - 1)).get(0);
-            exLeftLine = new Line(leftTop.center.x, leftTop.center.y, leftBottom.center.x, leftBottom.center.y);
-            Logger.logOCV("exLeftLine > " + exLeftLine.toString());
-        }
-
-        boolean canExtraPolateRight = rightMost.size() > 1;
-        Line exRightLine = null;
-        if (canExtraPolateRight) {
-            ArrayList<Circle> temp = circleData.answerCircleMap.get(rightMost.get(0));
-            Circle rightTop = temp.get(temp.size() - 1);
-            temp = circleData.answerCircleMap.get(rightMost.get(rightMost.size() - 1));
-            Circle rightBottom = temp.get(temp.size() - 1);
-            exRightLine = new Line(rightTop.center.x, rightTop.center.y, rightBottom.center.x, rightBottom.center.y);
-            Logger.logOCV("exRightLine > " + exRightLine.toString());
-        }
-
-        /* Extrapolate left/right-most circles in other rows (where opencv couldnt detect outermost circles)
-        * - done by finding intersection of left/rightmost answer column lines with individual
-        *  answer rows
-        * */
-        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
-            ArrayList<Circle> row = circleData.answerCircleMap.get(k);
-            int size = row.size();
-            Circle leftMostCircle = row.get(0);
-            Circle rightMostCircle = row.get(size - 1);
-            Line rowLine = Utility.getRowLine(leftMostCircle, rightMostCircle, avgAnswerRadius);
-            // Logger.logOCV("rowLine > " + rowLine.toString());
-            if (canExtraPolateLeft && !leftMost.contains(k)) {
-                Point point = Utility.findIntersection(exLeftLine, rowLine);
-                // Logger.logOCV("intersection point left > " + point.toString());
-                Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
-                newCircle.isExtrapolated = true;
-                row.add(0, newCircle);//add leftmost circle at index 0
-                Logger.logOCV("extrapolateOuter Left > " + k + " > added by intersection at pos 0 at center = " + point.toString());
+            Circle circle0 = row.get(0);
+            Circle circleN = row.get(rowSize - 1);
+            Line rowLine = new Line(circle0.center.x, circle0.center.y, circleN.center.x, circleN.center.y);
+            double dist0 = Utility.circleToLineDistance(leftLine, circle0);
+            if (dist0 > 2 * cRatios.avgAnswerRadius) {
+                // if distance of leftmost circle is greater than atleast twice of circle radius
+                // then its not the actual leftmost circles
+                // get leftmost circle by intersection of rowLine and identity left line
+                Circle circle = Utility.getCircleAtIntersection(leftLine, rowLine, avgAnswerRadius);
+                row.add(0, circle);
+                Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added LEFTMOST");
+                rowSize++;
             }
-            if (canExtraPolateRight && !rightMost.contains(k)) {
-                Point point = Utility.findIntersection(exRightLine, rowLine);
-                // Logger.logOCV("intersection point right > " + point.toString());
-                Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
-                newCircle.isExtrapolated = true;
-                row.add(row.size(), newCircle);// add rightmost circle at last index
-                Logger.logOCV("extrapolateOuter Right > " + k + " > added by intersection at pos " + size + " at center = " + point.toString());
+
+            double distN = Utility.circleToLineDistance(rightLine, circleN);
+            if (distN > 2 * cRatios.avgAnswerRadius) {
+                // if distance of rightmost circle is greater than atleast twice of circle radius
+                // then its not the actual rightmost circles
+                // get rightmost circle by intersection of rowLine and identity right line
+                Circle circle = Utility.getCircleAtIntersection(rightLine, rowLine, avgAnswerRadius);
+                row.add(rowSize, circle);
+                Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added RIGHTMOST");
+                rowSize++;
             }
         }
         return true;
@@ -396,11 +291,29 @@ public class CircleHelper extends AbstractCircleHelper {
         }
         Logger.logOCV("extrapolateIdGradeMid > avgCCd > " + avgCcd + "------------------");
 
+        extrapolateTopIdGradeCircle(avgCcd, circleData.idCircleMap, false);
+        extrapolateTopIdGradeCircle(avgCcd, circleData.gradeCircleMap, true);
         extrapolateInnerIdGradeCircles(avgCcd, circleData.idCircleMap);
         extrapolateOuterIdGradeCircles(avgCcd, circleData.idCircleMap);
         extrapolateInnerIdGradeCircles(avgCcd, circleData.gradeCircleMap);
         extrapolateOuterIdGradeCircles(avgCcd, circleData.gradeCircleMap);
         return true;
+    }
+
+    private void extrapolateTopIdGradeCircle(double avgCcd, TreeMap<Integer, ArrayList<Circle>> circleMap, boolean isGradeMap) {
+        int len = circleMap.size();
+        Line topLine = secondaryDotDS.getTopLine();
+        for (int i = 0; i < len; ++i) {
+            ArrayList<Circle> list = circleMap.get(i);
+            Circle c0 = list.get(0);
+            double perp = Utility.circleToLineDistance(topLine, c0);
+            if (perp > 1.5 * avgIdGradeRadius) {
+                // no top circle is there
+                Line ansLine = isGradeMap ? getAnswerLineCorrespondingToIdGrade(4) : getAnswerLineCorrespondingToIdGrade(i);
+                Circle circle = Utility.getCircleAtIntersection(topLine, ansLine, avgIdGradeRadius);
+                list.add(0, circle);
+            }
+        }
     }
 
     private void extrapolateInnerIdGradeCircles(double avgCcd, TreeMap<Integer, ArrayList<Circle>> circleMap) {
@@ -431,21 +344,15 @@ public class CircleHelper extends AbstractCircleHelper {
         * - > extrapolate bottom circle parallel to answer column 2 line
         * - > if not - > extrapolate top circles by thresholding using avgCCd
         *  - > extrapolate bottom circles*/
-        Line topLine = dotData.getTopLine();
+//        Line topLine = secondaryDotDS.getTopLine();
         int len = circleMap.size();
-      /*  double height = 0.9 * rows;
-        double ratioLineLen = cRatios.getBottomToTopLineRatio();
-        double ratioVertLineLen = cRatios.getRightToLeftLineRatio();*/
-
-       /* double threshTop = cRatios.getTopPerpThreshholdForIdCircles();
-        Logger.logOCV("extrapolateOuterIdGradeCircles > threshTop =  " + threshTop);*/
         Logger.logOCV(cRatios.toString());
 
         for (int i = 0; i < len; ++i) {
             ArrayList<Circle> list = circleMap.get(i);
-            int size = list.size();
+            /*  int size = list.size();
             // extrapolate top circles
-            while (size < SheetConstants.NUM_IDS_IN_COLUMN && size > 0) {
+                while (size < SheetConstants.NUM_IDS_IN_COLUMN && size > 0) {
                 Circle circle0 = list.get(0);
                 Circle circle1 = null;
                 if (size < 2) {
@@ -457,19 +364,7 @@ public class CircleHelper extends AbstractCircleHelper {
 
                 Circle newCircle = Utility.getCircleToTop(circle0, circle1, avgIdGradeRadius);
                 double perp = Utility.circleToLineDistance(topLine, newCircle);
-                double ratioCcdPerp = perp / avgCcd;
-                Logger.logOCV("perp > col " + i + " > " + perp + ", ratioCcdPerp = " + ratioCcdPerp);
-              /*  Logger.logOCV("perp > col " + i + " > " + perp + ", ratioCcdPerp = " + ratioCcdPerp + ", threshNorm = " + threshTopNorm);
-                      double centerY = (circle0.center.y + newCircle.center.y) / 2;
-                double changeFactor = Math.abs(1 - ratioLineLen) * (ratioLineLen > 1 ? (height - centerY) : centerY) / height;
-                double ratioY = (ratioLineLen > 1 ? (1 + changeFactor) : (1 - changeFactor));
-                double threshTopNorm = threshTop / ratioY;
-                if (ratioVertLineLen > 1)
-                    threshTopNorm /= ratioVertLineLen;
-                if ((perp > threshTopNorm && (perp - threshTopNorm) > 0.8d * avgIdGradeRadius) ||
-                        (perp < threshTopNorm && (threshTopNorm - perp) < 0.8d * avgIdGradeRadius))
-                if (perp < (threshTopNorm - 3d)) {*/
-                if (ratioCcdPerp < SheetConstants.MULTIPLIER_CCD_THRESH_TOP0) {
+                if (perp < avgIdGradeRadius) {
                     Logger.logOCV("DISC > col " + i + " > " + newCircle.center.x + "," + newCircle.center.y);
                     break;
                 } else {
@@ -478,11 +373,11 @@ public class CircleHelper extends AbstractCircleHelper {
                             + circle0.center.x + "," + circle0.center.y + "  and  " + circle1.center.x + "," + circle1.center.y);
                 }
                 size = list.size();
-            }
+            }*/
             // extrapolate bottom circles
-            size = list.size();
+            int size = list.size();
             int numCirclesLeft = SheetConstants.NUM_IDS_IN_COLUMN - size;
-            if (size > 0) {
+            if (size > 1) {
                 while (numCirclesLeft > 0) {
                     Circle circle0 = list.get(size - 1);
                     Circle circle1 = list.get(size - 2);
@@ -494,5 +389,150 @@ public class CircleHelper extends AbstractCircleHelper {
             }
         }
     }
-
 }
+
+
+
+ /*   @Override
+    protected boolean extrapolateOuterAnswerUndetectedCircles() {
+        *//* Extrapolate outermost left/right circles in each row by measuring distance of left/most detected circles
+        * from left/right lines
+        *  - distance is normalised by top/bottom or left/right line ratios
+        * *//*
+        double ratioVertLine = cRatios.getRightToLeftLineRatio();
+        double ratioHorzLine = cRatios.getBottomToTopLineRatio();
+        double changeFactorHorz = Math.abs(ratioHorzLine - 1);
+        double height = rows * 0.7d;
+        double heightDiff = rows * 0.3d;
+        double normHorzMultiplier = 0.95d;
+        Logger.logOCV("ratio Vert = " + ratioVertLine + ", horz = " + ratioHorzLine);
+
+        Line leftLine = dotData.getLeftLine();
+        double threshLeft0 = cRatios.getAnswerCirclesLeftPerpendicularThreshhold(0);
+        double threshLeft1 = cRatios.getAnswerCirclesLeftPerpendicularThreshhold(1);
+        double threshLeftVertNorm0 = (threshLeft0 * normHorzMultiplier) / ratioVertLine;
+        double threshLeftVertNorm1 = (threshLeft1 * normHorzMultiplier) / ratioVertLine;
+        Logger.logOCV("threshL Vert > " + threshLeft0 + ", " + threshLeft1);
+        *//* contains indices of rows with leftmost circles detected*//*
+        ArrayList<Integer> leftMost = new ArrayList<>();
+
+        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
+            ArrayList<Circle> row = circleData.answerCircleMap.get(k);
+            if (row.size() < 2) {
+                errorType = ErrorType.TYPE4;
+                return false;
+            }
+            Circle circle1 = row.get(0);
+            double perpL = Utility.circleToLineDistance(leftLine, circle1);
+            double centerY = circle1.center.y;
+            double changeFactorY = (centerY - heightDiff) * changeFactorHorz / height;
+            double ratioHorzNorm = (ratioHorzLine > 1 ? (1 + changeFactorY) : (1 - changeFactorY));
+            double threshLeftHorzNorm0 = threshLeft0 * ratioHorzNorm * normHorzMultiplier;
+            double threshLeftHorzNorm1 = threshLeft1 * ratioHorzNorm * normHorzMultiplier;
+            Logger.logOCV("perpL > " + k + " > " + perpL + ", threshNorm0 > vert = " + threshLeftVertNorm0 + ", horz = " + threshLeftHorzNorm0);
+            if (perpL < Math.min(threshLeftVertNorm0, threshLeftHorzNorm0))
+                leftMost.add(k);
+            *//*else if (perpL > threshLeft0 && perpL < threshLeft1 && row.size() > 1) {
+                Circle circle2 = row.get(1);
+                Circle newCircle = Utility.getCircleToLeft(circle1, circle2, avgRadius);
+                circleData.answerCircleMap.get(k).add(0, newCircle);
+                Logger.logOCV("extrapolateOuter Left > " + k + " > added at pos 0");
+                leftMost.add(k);
+            }*//*
+        }
+        Collections.sort(leftMost);
+        Logger.logOCV("leftMost > " + leftMost.toString());
+
+        Line rightLine = dotData.getRightLine();
+        double threshRight0 = cRatios.getAnswerCirclesRightPerpendicularThreshhold(0);
+        double threshRight1 = cRatios.getAnswerCirclesRightPerpendicularThreshhold(1);
+        double threshRightVertNorm0 = threshRight0 * ratioVertLine * normHorzMultiplier;
+        double threshRightVertNorm1 = threshRight1 * ratioVertLine * normHorzMultiplier;
+        Logger.logOCV("threshR Vert > " + threshRight0 + ", " + threshRight1);
+        *//* contains indices of rows with rightmost circles detected*//*
+        ArrayList<Integer> rightMost = new ArrayList<>();
+
+        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
+            ArrayList<Circle> row = circleData.answerCircleMap.get(k);
+            int len = row.size();
+            Circle circle1 = row.get(len - 1);
+            double perpR = Utility.circleToLineDistance(rightLine, circle1);
+            double centerY = circle1.center.y;
+            double changeFactorY = (centerY - heightDiff) * changeFactorHorz / height;
+            double ratioHorzNorm = (ratioHorzLine > 1 ? (1 + changeFactorY) : (1 - changeFactorY));
+            double threshRightHorzNorm0 = threshRight0 * ratioHorzNorm * normHorzMultiplier;
+            double threshRightHorzNorm1 = threshRight1 * ratioHorzNorm * normHorzMultiplier;
+            Logger.logOCV("perpL > " + k + " > " + perpR + ", threshNorm0 > vert = " + threshRightVertNorm0 + ", horz = " + threshRightHorzNorm0);
+            if (perpR < Math.min(threshRightVertNorm0, threshRightHorzNorm0))
+                rightMost.add(k);
+           *//* else if (perpR > threshRight0 && perpR < threshRight1 && len > 1) {
+                Circle circle2 = row.get(len - 2);
+                Circle newCircle = Utility.getCircleToRight(circle1, circle2, avgRadius);
+                circleData.answerCircleMap.get(k).add(len, newCircle);
+                Logger.logOCV("extrapolateOuter Right> " + k + " > added at pos " + len);
+                rightMost.add(k);
+            }*//*
+        }
+        Collections.sort(rightMost);
+        Logger.logOCV("rightMost > " + rightMost.toString());
+
+        *//*if no two rows have left/rightmost detected circles, extrapolation cant be done and error is thrown*//*
+        int sizeLeft = leftMost.size();
+        int sizeRight = rightMost.size();
+        if (sizeLeft < 2 || sizeRight < 2) {
+            errorType = ErrorType.TYPE5;
+            return false;
+        }
+
+        // extrapolate leftmost & rightmost line
+        boolean canExtraPolateLeft = leftMost.size() > 1;
+        Line exLeftLine = null;
+        if (canExtraPolateLeft) {
+            Circle leftTop = circleData.answerCircleMap.get(leftMost.get(0)).get(0);
+            Circle leftBottom = circleData.answerCircleMap.get(leftMost.get(leftMost.size() - 1)).get(0);
+            exLeftLine = new Line(leftTop.center.x, leftTop.center.y, leftBottom.center.x, leftBottom.center.y);
+            Logger.logOCV("exLeftLine > " + exLeftLine.toString());
+        }
+
+        boolean canExtraPolateRight = rightMost.size() > 1;
+        Line exRightLine = null;
+        if (canExtraPolateRight) {
+            ArrayList<Circle> temp = circleData.answerCircleMap.get(rightMost.get(0));
+            Circle rightTop = temp.get(temp.size() - 1);
+            temp = circleData.answerCircleMap.get(rightMost.get(rightMost.size() - 1));
+            Circle rightBottom = temp.get(temp.size() - 1);
+            exRightLine = new Line(rightTop.center.x, rightTop.center.y, rightBottom.center.x, rightBottom.center.y);
+            Logger.logOCV("exRightLine > " + exRightLine.toString());
+        }
+
+        *//* Extrapolate left/right-most circles in other rows (where opencv couldnt detect outermost circles)
+        * - done by finding intersection of left/rightmost answer column lines with individual
+        *  answer rows
+        * *//*
+        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
+            ArrayList<Circle> row = circleData.answerCircleMap.get(k);
+            int size = row.size();
+            Circle leftMostCircle = row.get(0);
+            Circle rightMostCircle = row.get(size - 1);
+            Line rowLine = Utility.getRowLine(leftMostCircle, rightMostCircle, avgAnswerRadius);
+            // Logger.logOCV("rowLine > " + rowLine.toString());
+            if (canExtraPolateLeft && !leftMost.contains(k)) {
+                Point point = Utility.findIntersection(exLeftLine, rowLine);
+                // Logger.logOCV("intersection point left > " + point.toString());
+                Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
+                newCircle.isExtrapolated = true;
+                row.add(0, newCircle);//add leftmost circle at index 0
+                Logger.logOCV("extrapolateOuter Left > " + k + " > added by intersection at pos 0 at center = " + point.toString());
+            }
+            if (canExtraPolateRight && !rightMost.contains(k)) {
+                Point point = Utility.findIntersection(exRightLine, rowLine);
+                // Logger.logOCV("intersection point right > " + point.toString());
+                Circle newCircle = new Circle(point.x, point.y, avgAnswerRadius);
+                newCircle.isExtrapolated = true;
+                row.add(row.size(), newCircle);// add rightmost circle at last index
+                Logger.logOCV("extrapolateOuter Right > " + k + " > added by intersection at pos " + size + " at center = " + point.toString());
+            }
+        }
+        return true;
+    }
+*/

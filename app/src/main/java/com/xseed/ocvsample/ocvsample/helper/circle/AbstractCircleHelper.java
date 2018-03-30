@@ -9,6 +9,7 @@ import com.xseed.ocvsample.ocvsample.datasource.CircleDS;
 import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
 import com.xseed.ocvsample.ocvsample.datasource.ConfigDS;
 import com.xseed.ocvsample.ocvsample.datasource.PrimaryDotDS;
+import com.xseed.ocvsample.ocvsample.datasource.SecondaryDotDS;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
 import com.xseed.ocvsample.ocvsample.pojo.Line;
 import com.xseed.ocvsample.ocvsample.pojo.OCVCircleConfig;
@@ -43,7 +44,9 @@ public abstract class AbstractCircleHelper {
     protected double avgIdGradeRadius = 0;
     protected ArrayList<Circle> circles;
     protected CircleDS circleData;
-    protected PrimaryDotDS dotData;
+    protected PrimaryDotDS primaryDotDS;
+    protected SecondaryDotDS secondaryDotDS;
+
     protected int rows, cols;
     protected CircleRatios cRatios;
     protected int errorType = ErrorType.TYPE0;
@@ -53,20 +56,24 @@ public abstract class AbstractCircleHelper {
     }
 
     public void createDataSource(ArrayList<Circle> circles, int rows, int cols,
-                                 PrimaryDotDS dotData, CircleRatios cRatios) {
+                                 PrimaryDotDS primaryDotDS, SecondaryDotDS secondaryDotDS, CircleRatios cRatios) {
         Logger.logOCV("baseMat size > " + cols + "," + rows);
         this.circles = circles;
         this.cRatios = cRatios;
         this.rows = rows;
         this.cols = cols;
-        this.dotData = dotData;
+        this.primaryDotDS = primaryDotDS;
+        this.secondaryDotDS = secondaryDotDS;
 
         avgAnswerRadius = getAverageRadius(circles);
         cRatios.setAvgAnswerRadius(avgAnswerRadius);
 
         getFilteredListByRadius();
         ConfigDS.getInstance().setCirclesDetected(circles.size());
-        createInitialCircleDataSource();
+
+        boolean canCreateInitialDatasource = createInitialCircleDataSource();
+        if (!canCreateInitialDatasource) return;
+
         filterDuplicateCircles(circleData.answerCircleMap);
 
         boolean canExtrapolateOuterAnswers = extrapolateOuterAnswerUndetectedCircles();
@@ -78,6 +85,7 @@ public abstract class AbstractCircleHelper {
 
         boolean canCreateIdGradeMap = createIdGradeCircleMap();
         if (!canCreateIdGradeMap) return;
+
         filterDuplicateCircles(circleData.idCircleMap);
         filterDuplicateCircles(circleData.gradeCircleMap);
 
@@ -112,7 +120,7 @@ public abstract class AbstractCircleHelper {
         Logger.logOCV("normalised answer avgRad = " + avgAnswerRadius + " , filtered Circles by Radius = " + deletedCircles);
     }
 
-    private void createInitialCircleDataSource() {
+    boolean createInitialCircleDataSource() {
         circleData = new CircleDS();
         int numCircles = circles.size();
         Logger.logOCV("creteInitialDS > noOfCircles : " + numCircles);
@@ -120,6 +128,7 @@ public abstract class AbstractCircleHelper {
         tempList.addAll(circles);
         /* sort circles by descending values of y*/
         Collections.sort(tempList, new AnswerCircleColumnComparator());
+        Line midLine = secondaryDotDS.getMidLine();
         /* as a row can have max of SheetConstants.NUM_ROWS_ANSWERS answer circles,
           - > take twice this number (as sorting by descending Y may not always give the bottom most circles) for safety
           - > get perpendicular distance of these circles from nearest bottom line
@@ -134,17 +143,29 @@ public abstract class AbstractCircleHelper {
                 circleData.answerCircleMap.put(i, row);
                 Logger.logOCV("creteInitialDS > added row : " + i);
                 tempList.removeAll(row);
+                // check if this is the topmost line
+                Circle c0 = row.get(0);
+                double dist = Utility.circleToLineDistance(midLine, c0);
+                if (dist < 1.5 * avgAnswerRadius) {
+                    // topmost answer line is obtained -> stop loop, if not in last iteration
+                    i = SheetConstants.NUM_ROWS_ANSWERS;
+                }
             }
+        }
+        if (circleData.answerCircleMap.size() != SheetConstants.NUM_ROWS_ANSWERS) {
+            errorType = ErrorType.TYPE10;
+            return false;
         }
         // all circles not in answer rows are presumed as id/grade circles, but need filtering
         circleData.idGradeCircleList = tempList;
         Logger.logOCV(circleData.toString());
+        return true;
     }
 
     private Line getBottomLine(TreeMap<Integer, ArrayList<Circle>> map, int i) {
        /* for lowest answer row, nearest bottom line is enclosed by bottom left and right dots*/
         if (i == 0)
-            return dotData.getBottomLine();
+            return primaryDotDS.getBottomLine();
         else {
             /* else get nearest available bottom line*/
             List<Circle> row = map.get(i - 1);
@@ -198,7 +219,7 @@ public abstract class AbstractCircleHelper {
         avgIdGradeRadius = getAverageRadius(list);
         cRatios.avgIdGradeRadius = avgIdGradeRadius;
         Logger.logOCV(cRatios.toString());
-        Line leftLine = dotData.getLeftLine();
+        Line leftLine = primaryDotDS.getLeftLine();
         TreeMap<Integer, ArrayList<Circle>> map = new TreeMap<>();
         double horizontalThreshhold = cRatios.getHorizontalThreshholdBetweenIds();
         ListIterator<Circle> iter = list.listIterator();

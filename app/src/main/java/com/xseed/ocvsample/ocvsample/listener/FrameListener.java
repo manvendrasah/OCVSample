@@ -241,7 +241,7 @@ public class FrameListener extends AbstractFrameListener {
             @Override
             public void run() {
                 super.run();
-                circleHelper.createDataSource(circles, matDS.getBaseMat().rows(), matDS.getBaseMat().cols(), primaryDotData, cRatios);
+                circleHelper.createDataSource(circles, matDS.getBaseMat().rows(), matDS.getBaseMat().cols(), primaryDotData, secondaryDotData, cRatios);
                 if (circleHelper.isError()) {
                     postError(circleHelper.getError());
                     return;

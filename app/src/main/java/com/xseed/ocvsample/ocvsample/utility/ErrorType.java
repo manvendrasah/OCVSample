@@ -25,9 +25,11 @@ public class ErrorType {
     public static final int TYPE8 = 8;
     public static final String ERROR_8 = "Column not detected in id or grade"; // a column has no circles detected in id or grade
     public static final int TYPE9 = 9;
-    public static final String ERROR_9 = "Identity dots not detected"; // a column has no circles detected in id or grade
+    public static final String ERROR_9 = "Identity dots not detected"; // could not detect identity dots
+    public static final int TYPE10 = 10;
+    public static final String ERROR_10 = "Answer row not detected"; // circles in a whole answer row are found missing
 
-    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9};
+    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9, ERROR_10};
 
     public static String getErrorString(int errorType) {
         return errors[errorType];

@@ -59,7 +59,7 @@ public class PrimaryDotHelper extends BaseDotHelper {
             }
             if (!isPartValid && (ii > searchLength)) {
                 Logger.logOCV("findBoundaryDots > error1");
-                //   dotData.isValid = false;
+                //   primaryDotDS.isValid = false;
                 return;
             }
         }
@@ -80,7 +80,7 @@ public class PrimaryDotHelper extends BaseDotHelper {
             }
             if (!isPartValid && (ii > searchLength)) {
                 Logger.logOCV("findBoundaryDots > error2");
-                //   dotData.isValid = false;
+                //   primaryDotDS.isValid = false;
                 return;
             }
         }
@@ -101,7 +101,7 @@ public class PrimaryDotHelper extends BaseDotHelper {
             }
             if (!isPartValid && (ii > searchLength)) {
                 Logger.logOCV("findBoundaryDots > error3");
-                //  dotData.isValid = false;
+                //  primaryDotDS.isValid = false;
                 return;
             }
         }
@@ -122,7 +122,7 @@ public class PrimaryDotHelper extends BaseDotHelper {
             }
             if (!isPartValid && (ii > searchLength)) {
                 Logger.logOCV("findBoundaryDots > error4");
-                // dotData.isValid = false;
+                // primaryDotDS.isValid = false;
                 return;
             }
         }
