@@ -23,7 +23,7 @@ public class ErrorType {
     public static final int TYPE7 = 7;
     public static final String ERROR_7 = "Less than two safe indices in answers"; // one or fewer rows are detected correctly -> cant extrapolate other rows
     public static final int TYPE8 = 8;
-    public static final String ERROR_8 = "Column not detected in id or grade"; // a column has no circles detected in id or grade
+    public static final String ERROR_8 = "More than 2 Columns have single entry in id or grade"; // more than 2 columns have single circles detected in id or grade
     public static final int TYPE9 = 9;
     public static final String ERROR_9 = "Identity dots not detected"; // could not detect identity dots
     public static final int TYPE10 = 10;

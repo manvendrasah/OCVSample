@@ -269,10 +269,10 @@ public abstract class AbstractCircleHelper {
             if (!tempList.isEmpty()) realSize++;
         }
         /* even if one column from id or grade isnt detected - > throw error*/
-        if (realSize < 4) {
+        /*if (realSize < 4) {
             errorType = ErrorType.TYPE8;
             return false;
-        }
+        }*/
         return true;
     }
 

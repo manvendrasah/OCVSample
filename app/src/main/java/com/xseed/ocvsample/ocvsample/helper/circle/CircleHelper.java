@@ -15,6 +15,7 @@ import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
@@ -297,7 +298,13 @@ public class CircleHelper extends AbstractCircleHelper {
         extrapolateOuterIdGradeCircles(avgCcd, circleData.idCircleMap);
         extrapolateInnerIdGradeCircles(avgCcd, circleData.gradeCircleMap);
         extrapolateOuterIdGradeCircles(avgCcd, circleData.gradeCircleMap);
-        return true;
+        boolean canResolve = resolveSingleEntryColumnsIssue();
+        if (canResolve)
+            return true;
+        else {
+            errorType = ErrorType.TYPE8;
+            return false;
+        }
     }
 
     private void extrapolateTopIdGradeCircle(double avgCcd, TreeMap<Integer, ArrayList<Circle>> circleMap, boolean isGradeMap) {
@@ -305,9 +312,15 @@ public class CircleHelper extends AbstractCircleHelper {
         Line topLine = secondaryDotDS.getTopLine();
         for (int i = 0; i < len; ++i) {
             ArrayList<Circle> list = circleMap.get(i);
-            Circle c0 = list.get(0);
-            double perp = Utility.circleToLineDistance(topLine, c0);
-            if (perp > 1.5 * avgIdGradeRadius) {
+            boolean doPutTopCircle = false;
+            if (list.isEmpty())
+                doPutTopCircle = true;
+            else {
+                Circle c0 = list.get(0);
+                double perp = Utility.circleToLineDistance(topLine, c0);
+                doPutTopCircle = perp > 1.5 * avgIdGradeRadius;
+            }
+            if (doPutTopCircle) {
                 // no top circle is there
                 Line ansLine = isGradeMap ? getAnswerLineCorrespondingToIdGrade(4) : getAnswerLineCorrespondingToIdGrade(i);
                 Circle circle = Utility.getCircleAtIntersection(topLine, ansLine, avgIdGradeRadius);
@@ -350,7 +363,92 @@ public class CircleHelper extends AbstractCircleHelper {
 
         for (int i = 0; i < len; ++i) {
             ArrayList<Circle> list = circleMap.get(i);
-            /*  int size = list.size();
+            // extrapolate bottom circles
+            int size = list.size();
+            int numCirclesLeft = SheetConstants.NUM_IDS_IN_COLUMN - size;
+            if (size > 1) {
+                while (numCirclesLeft > 0) {
+                    Circle circle0 = list.get(size - 1);
+                    Circle circle1 = list.get(size - 2);
+                    Circle newCircle = Utility.getCircleToBottom(circle0, circle1, avgIdGradeRadius);
+                    list.add(size, newCircle);
+                    size++;
+                    numCirclesLeft = SheetConstants.NUM_IDS_IN_COLUMN - size;
+                }
+            }
+        }
+    }
+
+    private boolean resolveSingleEntryColumnsIssue() {
+        int numSingleEntries = 0;
+        HashMap<Integer, ArrayList<Circle>> safeListMap = new HashMap<>();
+        ArrayList<Integer> safeIndices = new ArrayList<>();
+
+        int mapSize = circleData.idCircleMap.size();
+        for (int i = 0; i < mapSize; ++i) {
+            if (circleData.idCircleMap.get(i).size() < 2) {
+                numSingleEntries++;
+            } else {
+                safeListMap.put(i, circleData.idCircleMap.get(i));
+                safeIndices.add(i);
+            }
+        }
+
+        if (circleData.gradeCircleMap.get(0).size() < 2)
+            numSingleEntries++;
+        else {
+            safeListMap.put(3, circleData.gradeCircleMap.get(0));
+            safeIndices.add(3);
+        }
+        Logger.logOCV("resolve singleEntry : safeIndices = " + safeIndices.toString());
+        // If More than 2 columns have single entry problem,
+        // we cannot extrapolate these columns due ot insufficient data, throw error
+        if (numSingleEntries > 2)
+            return false;
+        else if (numSingleEntries == 0) // return true if all columns are safe
+            return true;
+
+        // Check which column has single entries and fill that column by
+        // intersection of corresponding column line with rowline
+        // rowline is obtained by joining centers of circles in safe columns
+        int numSafeIndices = safeIndices.size();
+        if (!safeListMap.containsKey(0)) {
+            Logger.logOCV("Column resolved : ID 0");
+            extrapolateColumn(circleData.idCircleMap.get(0), safeListMap.get(safeIndices.get(0)),
+                    safeListMap.get(safeIndices.get(numSafeIndices - 1)), secondaryDotDS.getLeftLine());
+        }
+        if (!safeListMap.containsKey(1)) {
+            Logger.logOCV("Column resolved : ID 1");
+            extrapolateColumn(circleData.idCircleMap.get(1), safeListMap.get(safeIndices.get(0)),
+                    safeListMap.get(safeIndices.get(numSafeIndices - 1)), getAnswerLineCorrespondingToIdGrade(1));
+        }
+        if (!safeListMap.containsKey(2)) {
+            Logger.logOCV("Column resolved : ID 2");
+            extrapolateColumn(circleData.idCircleMap.get(2), safeListMap.get(safeIndices.get(0)),
+                    safeListMap.get(safeIndices.get(numSafeIndices - 1)), getAnswerLineCorrespondingToIdGrade(2));
+        }
+        if (!safeListMap.containsKey(3)) {
+            Logger.logOCV("Column resolved : Grade");
+            extrapolateColumn(circleData.gradeCircleMap.get(0), safeListMap.get(safeIndices.get(0)),
+                    safeListMap.get(safeIndices.get(numSafeIndices - 1)), getAnswerLineCorrespondingToIdGrade(4));
+        }
+
+        return true;
+    }
+
+    private void extrapolateColumn(ArrayList<Circle> singleEntryList, ArrayList<Circle> list1, ArrayList<Circle> list2, Line colLine) {
+        for (int i = 1; i < SheetConstants.NUM_IDS_IN_COLUMN; ++i) {
+            Point p1 = list1.get(i).center;
+            Point p2 = list2.get(i).center;
+            Line rowLine = new Line(p1.x, p1.y, p2.x, p2.y);
+            Circle newCircle = Utility.getCircleAtIntersection(rowLine, colLine, avgIdGradeRadius);
+            singleEntryList.add(i, newCircle);
+        }
+    }
+}
+
+// extrapolating top circles in idgrade columns
+/*  int size = list.size();
             // extrapolate top circles
                 while (size < SheetConstants.NUM_IDS_IN_COLUMN && size > 0) {
                 Circle circle0 = list.get(0);
@@ -374,24 +472,6 @@ public class CircleHelper extends AbstractCircleHelper {
                 }
                 size = list.size();
             }*/
-            // extrapolate bottom circles
-            int size = list.size();
-            int numCirclesLeft = SheetConstants.NUM_IDS_IN_COLUMN - size;
-            if (size > 1) {
-                while (numCirclesLeft > 0) {
-                    Circle circle0 = list.get(size - 1);
-                    Circle circle1 = list.get(size - 2);
-                    Circle newCircle = Utility.getCircleToBottom(circle0, circle1, avgIdGradeRadius);
-                    list.add(size, newCircle);
-                    size++;
-                    numCirclesLeft = SheetConstants.NUM_IDS_IN_COLUMN - size;
-                }
-            }
-        }
-    }
-}
-
-
 
  /*   @Override
     protected boolean extrapolateOuterAnswerUndetectedCircles() {
