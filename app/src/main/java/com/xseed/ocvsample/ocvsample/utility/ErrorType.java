@@ -28,8 +28,12 @@ public class ErrorType {
     public static final String ERROR_9 = "Identity dots not detected"; // could not detect identity dots
     public static final int TYPE10 = 10;
     public static final String ERROR_10 = "Answer row not detected"; // circles in a whole answer row are found missing
+    public static final int TYPE11 = 11;
+    public static final String ERROR_11 = "More than one Answer row not detected"; // circles in more thsn 1 answer rows are found missing
+    public static final int TYPE12 = 12;
+    public static final String ERROR_12 = "Miscellaneous error";
 
-    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9, ERROR_10};
+    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9, ERROR_10, ERROR_11, ERROR_12};
 
     public static String getErrorString(int errorType) {
         return errors[errorType];

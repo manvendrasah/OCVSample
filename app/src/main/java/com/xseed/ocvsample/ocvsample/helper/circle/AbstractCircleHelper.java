@@ -76,12 +76,12 @@ public abstract class AbstractCircleHelper {
 
         filterDuplicateCircles(circleData.answerCircleMap);
 
-        boolean canExtrapolateOuterAnswers = extrapolateOuterAnswerUndetectedCircles();
-        if (!canExtrapolateOuterAnswers) return;
-        boolean canExtrapolateMiddleAnswers = extrapolateMiddleAnswerUndetectedCircles();
-        if (!canExtrapolateMiddleAnswers) return;
-        boolean canFilterExtraAnswers = filterOutExtraAnswerCircles();
-        if (!canFilterExtraAnswers) return;
+        boolean canExtrapolateAnswerUndetectedCircles = extrapolatedAnswerUndetectedCircles();
+        if (!canExtrapolateAnswerUndetectedCircles)
+            return;
+        Logger.logOCV("Extrapolated answers = \n" + circleData.toString());
+        resolveErrorCasesInAnswerCircles();
+        filterAnswerRowZero();
 
         boolean canCreateIdGradeMap = createIdGradeCircleMap();
         if (!canCreateIdGradeMap) return;
@@ -92,11 +92,23 @@ public abstract class AbstractCircleHelper {
         extrapolateIdGradeUndetectedCircles();
     }
 
+    private boolean extrapolatedAnswerUndetectedCircles() {
+        boolean canExtrapolateOuterAnswers = extrapolateOuterAnswerUndetectedCircles();
+        if (!canExtrapolateOuterAnswers) return false;
+        boolean canExtrapolateMiddleAnswers = extrapolateMiddleAnswerUndetectedCircles();
+        if (!canExtrapolateMiddleAnswers) return false;
+        boolean canFilterExtraAnswers = filterOutExtraAnswerCircles();
+        if (!canFilterExtraAnswers) return false;
+        return true;
+    }
+
     protected abstract boolean extrapolateOuterAnswerUndetectedCircles();
 
     protected abstract boolean extrapolateMiddleAnswerUndetectedCircles();
 
     protected abstract boolean extrapolateIdGradeUndetectedCircles();
+
+    protected abstract void resolveErrorCasesInAnswerCircles();
 
     /* remove all circles with radius outside min and max threshhold values*/
     private void getFilteredListByRadius() {
@@ -152,9 +164,26 @@ public abstract class AbstractCircleHelper {
                 }
             }
         }
-        if (circleData.answerCircleMap.size() != SheetConstants.NUM_ROWS_ANSWERS) {
-            errorType = ErrorType.TYPE10;
-            return false;
+        int mapSize = circleData.answerCircleMap.size();
+        // clear row where only one circle is detected
+        // Will be used in resolveErrorCasesInAnswerCircles()
+        for (int i = 0; i < mapSize; ++i) {
+            if (circleData.answerCircleMap.get(i) != null && circleData.answerCircleMap.get(i).size() < 2) {
+                circleData.answerCircleMap.put(i, new ArrayList<Circle>());
+            }
+        }
+        // return with error if more than two rows are absent
+        // case where one row is absent will be handled in later process
+        if (mapSize != SheetConstants.NUM_ROWS_ANSWERS) {
+            if (mapSize > SheetConstants.NUM_ROWS_ANSWERS) {
+                errorType = ErrorType.TYPE12;
+                return false;
+            } else if (mapSize == SheetConstants.NUM_ROWS_ANSWERS - 1) {
+                errorType = ErrorType.TYPE10;
+            } else if (mapSize < SheetConstants.NUM_ROWS_ANSWERS - 1) {
+                errorType = ErrorType.TYPE11;
+                return false;
+            }
         }
         // all circles not in answer rows are presumed as id/grade circles, but need filtering
         circleData.idGradeCircleList = tempList;
@@ -317,7 +346,7 @@ public abstract class AbstractCircleHelper {
 
     protected Line getAnswerLineCorrespondingToIdGrade(int i) {
         Circle c0 = circleData.answerCircleMap.get(0).get(i);
-        Circle cn = circleData.answerCircleMap.get(SheetConstants.NUM_ROWS_ANSWERS - 1).get(i);
+        Circle cn = circleData.answerCircleMap.get(circleData.answerCircleMap.size() - 1).get(i);
         Line line = new Line(c0.center.x, c0.center.y, cn.center.x, cn.center.y);
         return line;
     }
@@ -351,7 +380,8 @@ public abstract class AbstractCircleHelper {
                     setIndices.add(0);
                     tempStr += "; set 0";
                 }
-            } else if (!setIndices.contains(1)) {
+            }
+            if (!setIndices.contains(1)) {
                 perp = Utility.circleToLineDistance(ansLine1, cn);
                 tempStr += " > perp1 = " + perp;
                 if (perp < threshHoldToAns4Line) {
@@ -359,7 +389,8 @@ public abstract class AbstractCircleHelper {
                     setIndices.add(1);
                     tempStr += "; set 1";
                 }
-            } else if (!setIndices.contains(2)) {
+            }
+            if (!setIndices.contains(2)) {
                 perp = Utility.circleToLineDistance(ansLine2, cn);
                 tempStr += " > perp1 = " + perp;
                 if (perp < threshHoldToAns4Line) {
@@ -460,32 +491,30 @@ public abstract class AbstractCircleHelper {
         int indN = safeIndices.get(safeIndices.size() - 1);
         while (!errorIndices.isEmpty()) {
             int ind = errorIndices.poll();
+            Logger.logOCV("Correcting error index > " + ind);
             ArrayList<Circle> list = circleData.answerCircleMap.get(ind);
-            Circle cAns1 = list.get(0);
-            Circle cAns2 = list.get(list.size() - 1);
-            Line ansLine = new Line(cAns1.center.x, cAns1.center.y, cAns2.center.x, cAns2.center.y);
-            ArrayList<Circle> tempList = new ArrayList<>();
-            ArrayList<Circle> list0 = circleData.answerCircleMap.get(ind0);
-            ArrayList<Circle> listN = circleData.answerCircleMap.get(indN);
-            for (int i = 0; i < SheetConstants.NUM_ANSWERS_IN_ROW; ++i) {
-                Circle cVert1 = list0.get(i);
-                Circle cVert2 = listN.get(i);
-                Line vertLine = new Line(cVert1.center.x, cVert1.center.y, cVert2.center.x, cVert2.center.y);
-                Circle newCircle = Utility.getCircleAtIntersection(ansLine, vertLine, avgAnswerRadius);
-                tempList.add(0, newCircle);
+            if (!list.isEmpty()) {
+                Logger.logOCV("Empty list");
+                Circle cAns1 = list.get(0);
+                Circle cAns2 = list.get(list.size() - 1);
+                Line ansLine = new Line(cAns1.center.x, cAns1.center.y, cAns2.center.x, cAns2.center.y);
+                ArrayList<Circle> tempList = new ArrayList<>();
+                ArrayList<Circle> list0 = circleData.answerCircleMap.get(ind0);
+                ArrayList<Circle> listN = circleData.answerCircleMap.get(indN);
+                for (int i = 0; i < SheetConstants.NUM_ANSWERS_IN_ROW; ++i) {
+                    Logger.logOCV("Row > " + i);
+                    Circle cVert1 = list0.get(i);
+                    Circle cVert2 = listN.get(i);
+                    Line vertLine = new Line(cVert1.center.x, cVert1.center.y, cVert2.center.x, cVert2.center.y);
+                    Circle newCircle = Utility.getCircleAtIntersection(ansLine, vertLine, avgAnswerRadius);
+                    Logger.logOCV("Row > " + i + " | lineH = " + ansLine.toString() +
+                            " | lineV = " + vertLine.toString() + " | newC = " + newCircle.toString());
+                    tempList.add(0, newCircle);
+                }
+                Collections.sort(tempList, new AnswerCircleRowComparator());
+                circleData.answerCircleMap.put(ind, tempList);
             }
-            Collections.sort(tempList, new AnswerCircleRowComparator());
-            circleData.answerCircleMap.put(ind, tempList);
         }
-
-        // in 16th row , remove last circles
-        ArrayList<Circle> list0 = circleData.answerCircleMap.get(0);
-        int len = list0.size();
-        List<Circle> tempList = list0.subList(0, len < SheetConstants.NUM_ANSWERS_IN_ROW0 ? len : SheetConstants.NUM_ANSWERS_IN_ROW0);
-        ArrayList<Circle> tempList1 = new ArrayList<>();
-        tempList1.addAll(tempList);
-        circleData.answerCircleMap.put(0, tempList1);
-        Logger.logOCV("Filtered final answers = \n" + circleData.toString());
         return true;
     }
 
@@ -546,6 +575,87 @@ public abstract class AbstractCircleHelper {
         return sum / (SheetConstants.NUM_ANSWERS_IN_COLUMN_IN_ROW - 1);
     }
 
+    protected int findMissingAnswerRowIndex() {
+        Logger.logOCV("findMissingAnswerRowIndex");
+        int missingIndex = -1;
+        int mapSize = circleData.answerCircleMap.size();
+
+        // first check if top row is missing
+        Line topLine = secondaryDotDS.getMidLine();
+        double perp = Utility.circleToLineDistance(topLine, circleData.answerCircleMap.get(mapSize - 1).get(0));
+        if (perp > avgAnswerRadius) {
+            missingIndex = SheetConstants.NUM_ROWS_ANSWERS - 1;
+//             recalibrateAnswerMap(missingIndex);
+            return missingIndex;
+        }
+        // second check in bottom row is missing
+        Line bottomLine = secondaryDotDS.getBottomLine();
+        perp = Utility.circleToLineDistance(bottomLine, circleData.answerCircleMap.get(0).get(0));
+        if (perp > avgAnswerRadius) {
+            missingIndex = 0;
+            recalibrateAnswerMap(missingIndex);
+            return missingIndex;
+        }
+        double maxDist = Double.MIN_VALUE;
+        for (int i = 0; i < mapSize - 1; ++i) {
+            Circle c1 = circleData.answerCircleMap.get(i).get(0);
+            Circle c2 = circleData.answerCircleMap.get(i + 1).get(0);
+            double dist = Utility.getDistanceBetweenPoints(c1, c2);
+            if (dist > maxDist) {
+                missingIndex = i + 1;
+                maxDist = dist;
+            }
+        }
+        recalibrateAnswerMap(missingIndex);
+        return missingIndex;
+    }
+
+    private void recalibrateAnswerMap(int missingIndex) {
+        Logger.logOCV("recalibrateAnswerMap > missingIndex = " + missingIndex);
+        TreeMap<Integer, ArrayList<Circle>> tempMap = new TreeMap<>();
+        TreeMap<Integer, ArrayList<Circle>> oldMap = circleData.answerCircleMap;
+        for (int i = 0; i < missingIndex; ++i)
+            tempMap.put(i, oldMap.get(i));
+        tempMap.put(missingIndex, new ArrayList<Circle>());
+        for (int i = missingIndex + 1; i < SheetConstants.NUM_ROWS_ANSWERS; ++i)
+            tempMap.put(i, oldMap.get(i - 1));
+        circleData.answerCircleMap = tempMap;
+    }
+
+    protected ArrayList<Circle> getRowByIntersection(Line rowLine, ArrayList<Circle> list1, ArrayList<Circle> list2) {
+        ArrayList<Circle> newRow = new ArrayList<>();
+        for (int i = 0; i < SheetConstants.NUM_ANSWERS_IN_ROW; ++i) {
+            Point center1 = list1.get(i).center;
+            Point center2 = list2.get(i).center;
+            Line colLine = new Line(center1.x, center1.y, center2.x, center2.y);
+            Circle newCircle = Utility.getCircleAtIntersection(rowLine, colLine, avgAnswerRadius);
+            newRow.add(i, newCircle);
+        }
+        return newRow;
+    }
+
+    protected ArrayList<Circle> getRowBetweenRows(int parts, int totalParts, ArrayList<Circle> list1, ArrayList<Circle> list2) {
+        ArrayList<Circle> newRow = new ArrayList<>();
+        for (int i = 0; i < SheetConstants.NUM_ANSWERS_IN_ROW; ++i) {
+            Circle c1 = list1.get(i);
+            Circle c2 = list2.get(i);
+            Circle newCircle = Utility.getCircleBetweenCircles(c1, c2, avgAnswerRadius, parts, totalParts);
+            newRow.add(i, newCircle);
+        }
+        return newRow;
+    }
+
+    private void filterAnswerRowZero() {
+        // in 16th row , remove last circles
+        ArrayList<Circle> list0 = circleData.answerCircleMap.get(0);
+        int len = list0.size();
+        List<Circle> tempList = list0.subList(0, len < SheetConstants.NUM_ANSWERS_IN_ROW0 ? len : SheetConstants.NUM_ANSWERS_IN_ROW0);
+        ArrayList<Circle> tempList1 = new ArrayList<>();
+        tempList1.addAll(tempList);
+        circleData.answerCircleMap.put(0, tempList1);
+        Logger.logOCV("Filtered final answers = \n" + circleData.toString());
+    }
+
     public void drawCirclesOnMat(ArrayList<Circle> circles, Mat circleMat) {
         for (Circle circle : circles) {
             Imgproc.circle(circleMat, circle.center, (int) Math.round(circle.radius),
@@ -554,7 +664,7 @@ public abstract class AbstractCircleHelper {
     }
 
     public boolean isError() {
-        return errorType > ErrorType.TYPE0;
+        return errorType > ErrorType.TYPE0 && errorType != ErrorType.TYPE4 && errorType != ErrorType.TYPE10;
     }
 
     public int getError() {

@@ -74,7 +74,7 @@ public class SheetConstants {
     public static final double MULTIPLIER_THRESH_RIGHT3 = 13;
 
     public static final double THRESHHOLD_PERPENDICULAR_VERTICAL = 1.5d;
-    public static final double THRESHHOLD_PERPENDICULAR_HORIZONTAL_ID = 1.5d;
+    public static final double THRESHHOLD_PERPENDICULAR_HORIZONTAL_ID = 1.35d;
     public static final double THRESHHOLD_PERPENDICULAR_HORIZONTAL_GRADE = 2.5d;
     /*
         Pixel value for distances between seconday DOTS' CENTERS to their closest primary dots' centers
@@ -86,4 +86,9 @@ public class SheetConstants {
     public static final int DIST_LLTOP = 51;// distance of (secondary) left line top dot from top left (primary) dot
     public static final int DIST_LLMID = 272;// distance of (secondary)left line mid dot from top left (primary) dot
     public static final int DIST_LLBOTTOM = 34;// distance of (secondary)left line bottom dot from bottom left (primary) dot
+/*
+    Weight value for circles in different BLOCK rows
+*/
+    public static final int WEIGHT_DIST_ROW_CLOSER = 147;
+    public static final int WEIGHT_DIST_ROW_FARTHER = 205;
 }

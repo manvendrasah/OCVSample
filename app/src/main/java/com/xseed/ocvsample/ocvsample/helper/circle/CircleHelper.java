@@ -62,36 +62,43 @@ public class CircleHelper extends AbstractCircleHelper {
     protected boolean extrapolateOuterAnswerUndetectedCircles() {
         Line leftLine = secondaryDotDS.getLeftLine();
         Line rightLine = secondaryDotDS.getRightLine();
-        for (int k = 0; k < SheetConstants.NUM_ROWS_ANSWERS; ++k) {
+        int mapSize = circleData.answerCircleMap.size();
+        for (int k = 0; k < mapSize; ++k) {
             ArrayList<Circle> row = circleData.answerCircleMap.get(k);
             int rowSize = row.size();
             if (rowSize < 2) {
-                errorType = ErrorType.TYPE4;
-                return false;
-            }
-            Circle circle0 = row.get(0);
-            Circle circleN = row.get(rowSize - 1);
-            Line rowLine = new Line(circle0.center.x, circle0.center.y, circleN.center.x, circleN.center.y);
-            double dist0 = Utility.circleToLineDistance(leftLine, circle0);
-            if (dist0 > 2 * cRatios.avgAnswerRadius) {
-                // if distance of leftmost circle is greater than atleast twice of circle radius
-                // then its not the actual leftmost circles
-                // get leftmost circle by intersection of rowLine and identity left line
-                Circle circle = Utility.getCircleAtIntersection(leftLine, rowLine, avgAnswerRadius);
-                row.add(0, circle);
-                Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added LEFTMOST");
-                rowSize++;
-            }
+                if (errorType == ErrorType.TYPE10) {
+                    /*Already a row is missing, this row would also be removed
+                            -> throw 2 rows missing error*/
+                    errorType = ErrorType.TYPE11;
+                    return false;
+                } else
+                    errorType = ErrorType.TYPE4;
+            } else {
+                Circle circle0 = row.get(0);
+                Circle circleN = row.get(rowSize - 1);
+                Line rowLine = new Line(circle0.center.x, circle0.center.y, circleN.center.x, circleN.center.y);
+                double dist0 = Utility.circleToLineDistance(leftLine, circle0);
+                if (dist0 > 2 * cRatios.avgAnswerRadius) {
+                    // if distance of leftmost circle is greater than atleast twice of circle radius
+                    // then its not the actual leftmost circles
+                    // get leftmost circle by intersection of rowLine and identity left line
+                    Circle circle = Utility.getCircleAtIntersection(leftLine, rowLine, avgAnswerRadius);
+                    row.add(0, circle);
+                    Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added LEFTMOST");
+                    rowSize++;
+                }
 
-            double distN = Utility.circleToLineDistance(rightLine, circleN);
-            if (distN > 2 * cRatios.avgAnswerRadius) {
-                // if distance of rightmost circle is greater than atleast twice of circle radius
-                // then its not the actual rightmost circles
-                // get rightmost circle by intersection of rowLine and identity right line
-                Circle circle = Utility.getCircleAtIntersection(rightLine, rowLine, avgAnswerRadius);
-                row.add(rowSize, circle);
-                Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added RIGHTMOST");
-                rowSize++;
+                double distN = Utility.circleToLineDistance(rightLine, circleN);
+                if (distN > 2 * cRatios.avgAnswerRadius) {
+                    // if distance of rightmost circle is greater than atleast twice of circle radius
+                    // then its not the actual rightmost circles
+                    // get rightmost circle by intersection of rowLine and identity right line
+                    Circle circle = Utility.getCircleAtIntersection(rightLine, rowLine, avgAnswerRadius);
+                    row.add(rowSize, circle);
+                    Logger.logOCV("extrapolateOuterAnswerUndetectedCircles > Row = " + k + " added RIGHTMOST");
+                    rowSize++;
+                }
             }
         }
         return true;
@@ -121,85 +128,140 @@ public class CircleHelper extends AbstractCircleHelper {
             Logger.logOCV("extrapolateMiddle > ------------ PROCESS ROW > " + k + " --------------");
 
             ArrayList<Circle> circles = circleData.answerCircleMap.get(k);
-            double len = circles.size();
-            String tempDist = "";
-            double avgCount = 0;
-            // double tempAvgCcd = 0;
-            double tempMinCcd = 0;
+            if (circles != null && circles.size() > 1) {
+                double len = circles.size();
+                String tempDist = "";
+                double avgCount = 0;
+                // double tempAvgCcd = 0;
+                double tempMinCcd = 0;
 
-            for (int i = 0; i < len - 1; ++i) {
-                Circle c1 = circles.get(i);
-                Circle c2 = circles.get(i + 1);
-                double centerDist = Utility.getDistanceBetweenPoints(c1, c2);
-                double centerX = (c1.center.x + c2.center.x) / 2;
-                if (centerDist < ccd) {
-                    double dRatio = centerX * changeFactor / width;
-                    double ratioNorm = ratioLineLen > 1 ? (1 + dRatio) : (1 - dRatio);
-                    tempMinCcd += centerDist / ratioNorm;
-                    tempDist += i + " : " + centerDist + ", ";
-                    // tempAvgCcd += centerDist;
-                    avgCount++;
-                }
-            }
-            if (avgCount > 0) {
-                //  avgCcd = tempAvgCcd / avgCount;
-                minCcd = tempMinCcd / avgCount;
-                minCcd = minCcd * 0.95d;
-                Logger.logOCV("extrapolateMiddle > distString = " + tempDist + ", minCcd = " + minCcd);
-            }
-
-            // if (avgCcd > 0) {
-            if (minCcd > 0) {
                 for (int i = 0; i < len - 1; ++i) {
                     Circle c1 = circles.get(i);
                     Circle c2 = circles.get(i + 1);
                     double centerDist = Utility.getDistanceBetweenPoints(c1, c2);
                     double centerX = (c1.center.x + c2.center.x) / 2;
-                    double dRatio = centerX * changeFactor / width;
-                    double ratioNorm = ratioLineLen > 1 ? (1 + dRatio) : (1 - dRatio);
-                    double ccdNorm = minCcd * ratioNorm;
-                    // double avgCcdNorm = getNormalisedCenterDistance(c1, c2, avgCcd);
-                    // double numPaths = centerDist / avgCcdNorm;
-                    // double numPathsNorm = Math.floor(numPaths + 0.3d);
-                    double numPaths = centerDist / ccdNorm;
-                    double numPathsNorm = Math.floor(numPaths + 0.4d);
-                    Logger.logOCV("extrapolateMiddle > row = " + k + " > i = " + i + ", dist = " + (int) centerDist + ", ccdNorm = " + ccdNorm +
-                            ", numPaths=" + numPaths + ", numPathsNorm = " + numPathsNorm /*+", dRatio = " + dRatio*/);
-                    for (int j = 1; j < numPathsNorm; ++j) {
-                        Circle newCircle = Utility.getCircleBetweenCircles(c1, c2, avgAnswerRadius, j, (int) numPathsNorm);
-                        circles.add(i + 1, newCircle);
-                        len += 1;
-                        ++i;
+                    if (centerDist < ccd) {
+                        double dRatio = centerX * changeFactor / width;
+                        double ratioNorm = ratioLineLen > 1 ? (1 + dRatio) : (1 - dRatio);
+                        tempMinCcd += centerDist / ratioNorm;
+                        tempDist += i + " : " + centerDist + ", ";
+                        // tempAvgCcd += centerDist;
+                        avgCount++;
                     }
                 }
-                if (noAvgSet.contains(k))
-                    noAvgSet.remove(k);
-            } else {
-                noAvgSet.add(k);
-                int size = noAvgSet.size();
+                if (avgCount > 0) {
+                    //  avgCcd = tempAvgCcd / avgCount;
+                    minCcd = tempMinCcd / avgCount;
+                    minCcd = minCcd * 0.95d;
+                    Logger.logOCV("extrapolateMiddle > distString = " + tempDist + ", minCcd = " + minCcd);
+                }
+
+                // if (avgCcd > 0) {
+                if (minCcd > 0) {
+                    for (int i = 0; i < len - 1; ++i) {
+                        Circle c1 = circles.get(i);
+                        Circle c2 = circles.get(i + 1);
+                        double centerDist = Utility.getDistanceBetweenPoints(c1, c2);
+                        double centerX = (c1.center.x + c2.center.x) / 2;
+                        double dRatio = centerX * changeFactor / width;
+                        double ratioNorm = ratioLineLen > 1 ? (1 + dRatio) : (1 - dRatio);
+                        double ccdNorm = minCcd * ratioNorm;
+                        // double avgCcdNorm = getNormalisedCenterDistance(c1, c2, avgCcd);
+                        // double numPaths = centerDist / avgCcdNorm;
+                        // double numPathsNorm = Math.floor(numPaths + 0.3d);
+                        double numPaths = centerDist / ccdNorm;
+                        double numPathsNorm = Math.floor(numPaths + 0.4d);
+                        Logger.logOCV("extrapolateMiddle > row = " + k + " > i = " + i + ", dist = " + (int) centerDist + ", ccdNorm = " + ccdNorm +
+                                ", numPaths=" + numPaths + ", numPathsNorm = " + numPathsNorm /*+", dRatio = " + dRatio*/);
+                        for (int j = 1; j < numPathsNorm; ++j) {
+                            Circle newCircle = Utility.getCircleBetweenCircles(c1, c2, avgAnswerRadius, j, (int) numPathsNorm);
+                            circles.add(i + 1, newCircle);
+                            len += 1;
+                            ++i;
+                        }
+                    }
+                    if (noAvgSet.contains(k))
+                        noAvgSet.remove(k);
+                } else {
+                    noAvgSet.add(k);
+                    int size = noAvgSet.size();
                 /* if none of the rows had consecutive circles
                 - > minCcd couldnt be calculated - > throw error*/
-                if (size >= SheetConstants.NUM_ROWS_ANSWERS) {
-                    errorType = ErrorType.TYPE6;
-                    return false;
-                }
-                Logger.logOCV("extrapolateMiddle > addToSet > " + k + ", setSize = " + noAvgSet.size());
-                // if first index in linklist is in noAvgSet - > remove
-                for (Integer i : noAvgSet) {
-                    if (linkList.peek() == i)
-                        linkList.poll();
-                }
-                int firstInd = 1;
+                    if (size >= SheetConstants.NUM_ROWS_ANSWERS) {
+                        errorType = ErrorType.TYPE6;
+                        return false;
+                    }
+                    Logger.logOCV("extrapolateMiddle > addToSet > " + k + ", setSize = " + noAvgSet.size());
+                    // if first index in linklist is in noAvgSet - > remove
+                    for (Integer i : noAvgSet) {
+                        if (linkList.peek() == i)
+                            linkList.poll();
+                    }
+                    int firstInd = 1;
                 /* add all indices in noAvgSet to linklist from 1st index, so that if 0th index has minCcd calculated
                 * - >  these rows can use the same minCcd, as they themselves don't have consecutive circles*/
-                for (Integer i : noAvgSet) {
-                    Logger.logOCV("extrapolateMiddle > addToLinkList > " + i + " at index " + firstInd);
-                    linkList.add(firstInd, i);
-                    firstInd++;
+                    for (Integer i : noAvgSet) {
+                        Logger.logOCV("extrapolateMiddle > addToLinkList > " + i + " at index " + firstInd);
+                        linkList.add(firstInd, i);
+                        firstInd++;
+                    }
                 }
             }
         }
         return true;
+    }
+
+    @Override
+    protected void resolveErrorCasesInAnswerCircles() {
+        Logger.logOCV("resolveErrorCasesInAnswerCircles > errorType = " + errorType);
+        if (errorType != ErrorType.TYPE4 && errorType != ErrorType.TYPE10) {
+            return;
+        }
+        int ind = -1;
+        // less then two circles have been obtained, and the row has been cleared
+        // entry for row still there and is used for resolving straight forward
+        if (errorType == ErrorType.TYPE4) {
+            for (int i = 0; i < SheetConstants.NUM_ROWS_ANSWERS; ++i) {
+                if (circleData.answerCircleMap.get(i).isEmpty()) {
+                    ind = i;
+                    i = SheetConstants.NUM_ROWS_ANSWERS;
+                }
+            }
+            Logger.logOCV("4. found index missing = " + ind);
+        }
+
+        // answer row is missing, have to find index of missing row and put entry in map
+        // before proceeding with resolving
+        if (errorType == ErrorType.TYPE10) {
+            ind = findMissingAnswerRowIndex();
+            Logger.logOCV("10. found index missing = " + ind);
+        }
+
+        if (ind == -1) {
+            errorType = ErrorType.TYPE12;
+            return;
+        }
+        Logger.logOCV("Resolving row > " + ind);
+        ArrayList<Circle> resolvedRow = getMissingRow(ind);
+        circleData.answerCircleMap.put(ind, resolvedRow);
+    }
+
+    private ArrayList<Circle> getMissingRow(int ind) {
+        if (ind == 0)
+            return getRowByIntersection(secondaryDotDS.getBottomLine(), circleData.answerCircleMap.get(1),
+                    circleData.answerCircleMap.get(SheetConstants.NUM_ROWS_ANSWERS - 1));
+        else if (ind == SheetConstants.NUM_ROWS_ANSWERS - 1)
+            return getRowByIntersection(secondaryDotDS.getMidLine(), circleData.answerCircleMap.get(0),
+                    circleData.answerCircleMap.get(SheetConstants.NUM_ROWS_ANSWERS - 2));
+        else if (ind == 1 || ind == 4 || ind == 7)
+            return getRowBetweenRows(1, 2, circleData.answerCircleMap.get(ind - 1), circleData.answerCircleMap.get(ind + 1));
+        else if (ind == 3 || ind == 6)
+            return getRowBetweenRows(SheetConstants.WEIGHT_DIST_ROW_FARTHER, SheetConstants.WEIGHT_DIST_ROW_CLOSER + SheetConstants.WEIGHT_DIST_ROW_FARTHER,
+                    circleData.answerCircleMap.get(ind - 1), circleData.answerCircleMap.get(ind + 1));
+        if (ind == 2 || ind == 5)
+            return getRowBetweenRows(SheetConstants.WEIGHT_DIST_ROW_CLOSER, SheetConstants.WEIGHT_DIST_ROW_CLOSER + SheetConstants.WEIGHT_DIST_ROW_FARTHER,
+                    circleData.answerCircleMap.get(ind - 1), circleData.answerCircleMap.get(ind + 1));
+        return null;
     }
 
     @Override
@@ -292,6 +354,7 @@ public class CircleHelper extends AbstractCircleHelper {
         }
         Logger.logOCV("extrapolateIdGradeMid > avgCCd > " + avgCcd + "------------------");
 
+        prepareIdGradeColumnsForExtraPolation();
         extrapolateTopIdGradeCircle(avgCcd, circleData.idCircleMap, false);
         extrapolateTopIdGradeCircle(avgCcd, circleData.gradeCircleMap, true);
         extrapolateInnerIdGradeCircles(avgCcd, circleData.idCircleMap);
@@ -304,6 +367,47 @@ public class CircleHelper extends AbstractCircleHelper {
         else {
             errorType = ErrorType.TYPE8;
             return false;
+        }
+    }
+
+    private void prepareIdGradeColumnsForExtraPolation() {
+        if (circleData.gradeCircleMap.get(0) == null) {
+            circleData.gradeCircleMap.put(0, new ArrayList<Circle>());
+            Logger.logOCV("prepareIdGradeColumnsForExtraPolation > GRADE > replaced ind 0");
+        }
+
+        int len = circleData.idCircleMap.size();
+        if (len == SheetConstants.NUM_COLUMNS_ID)
+            return;
+
+        TreeMap<Integer, ArrayList<Circle>> tempMap = new TreeMap<>();
+        double perp = 0;
+        // check for index 0
+        perp = Utility.circleToLineDistance(secondaryDotDS.getLeftLine(), circleData.idCircleMap.get(0).get(0));
+        if (perp > avgIdGradeRadius) {
+            // this is not the index of column 0
+            tempMap.put(0, new ArrayList<Circle>());
+            tempMap.put(1, circleData.idCircleMap.get(0));
+            tempMap.put(2, circleData.idCircleMap.get(1));
+            circleData.idCircleMap = tempMap;
+            tempMap.clear();
+            Logger.logOCV("prepareIdGradeColumnsForExtraPolation > ID > replaced ind 0");
+        }
+        //check for index 1
+        perp = Utility.circleToLineDistance(getAnswerLineCorrespondingToIdGrade(1), circleData.idCircleMap.get(1).get(0));
+        if (perp > 1.5 * avgIdGradeRadius) {
+            // this is not the index of column 0
+            tempMap.put(0, circleData.idCircleMap.get(0));
+            tempMap.put(1, new ArrayList<Circle>());
+            tempMap.put(2, circleData.idCircleMap.get(1));
+            circleData.idCircleMap = tempMap;
+            tempMap.clear();
+            Logger.logOCV("prepareIdGradeColumnsForExtraPolation > ID > replaced ind 2");
+        }
+        // check for index 2
+        if (circleData.idCircleMap.get(2) == null) {
+            circleData.idCircleMap.put(2, new ArrayList<Circle>());
+            Logger.logOCV("prepareIdGradeColumnsForExtraPolation > ID > replaced ind 3");
         }
     }
 
@@ -400,7 +504,7 @@ public class CircleHelper extends AbstractCircleHelper {
             safeListMap.put(3, circleData.gradeCircleMap.get(0));
             safeIndices.add(3);
         }
-        Logger.logOCV("resolve singleEntry : safeIndices = " + safeIndices.toString());
+        Logger.logOCV("resolve singleEntry Columns : safeIndices = " + safeIndices.toString());
         // If More than 2 columns have single entry problem,
         // we cannot extrapolate these columns due ot insufficient data, throw error
         if (numSingleEntries > 2)
