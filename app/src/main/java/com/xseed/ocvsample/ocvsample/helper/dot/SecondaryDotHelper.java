@@ -48,6 +48,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
         Dot bottomLeft = primaryDotData.bottomLeft;
         Dot bottomRight = primaryDotData.bottomRight;
         thDotData.tlLeft = Utility.getDotBetweenDots(topLeft, topRight, SheetConstants.DIST_TLLEFT, SheetConstants.DIST_LEFT_RIGHT);
+        thDotData.tlMid = Utility.getDotBetweenDots(topLeft, topRight, SheetConstants.DIST_TLMID, SheetConstants.DIST_LEFT_RIGHT);
         thDotData.tlRight = Utility.getDotBetweenDots(topRight, topLeft, SheetConstants.DIST_TLRIGHT, SheetConstants.DIST_LEFT_RIGHT);
 
         thDotData.rlTop = Utility.getDotBetweenDots(topRight, bottomRight, SheetConstants.DIST_LLTOP, SheetConstants.DIST_TOP_BOTTOM);
@@ -55,6 +56,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
         thDotData.rlBottom = Utility.getDotBetweenDots(bottomRight, topRight, SheetConstants.DIST_LLBOTTOM, SheetConstants.DIST_TOP_BOTTOM);
 
         thDotData.blLeft = Utility.getDotBetweenDots(bottomLeft, bottomRight, SheetConstants.DIST_TLLEFT, SheetConstants.DIST_LEFT_RIGHT);
+        thDotData.blMid = Utility.getDotBetweenDots(bottomLeft, bottomRight, SheetConstants.DIST_TLMID, SheetConstants.DIST_LEFT_RIGHT);
         thDotData.blRight = Utility.getDotBetweenDots(bottomRight, bottomLeft, SheetConstants.DIST_TLRIGHT, SheetConstants.DIST_LEFT_RIGHT);
 
         thDotData.llTop = Utility.getDotBetweenDots(topLeft, bottomLeft, SheetConstants.DIST_LLTOP, SheetConstants.DIST_TOP_BOTTOM);
@@ -67,22 +69,26 @@ public class SecondaryDotHelper extends BaseDotHelper {
         calcDotData = new SecondaryDotDS();
         Logger.logOCV("#===TOP LINE LEFT===# \nDot > thDot > " + thDotData.tlLeft.x + "," + thDotData.tlLeft.y);
         calcDotData.tlLeft = findDotNearBoundary(thDotData.tlLeft);
+        Logger.logOCV("#===TOP LINE MID===# \nDot > thDot > " + thDotData.tlMid.x + "," + thDotData.tlMid.y);
+        calcDotData.tlMid = findDotNearHorizontalMiddle(thDotData.tlMid);
         Logger.logOCV("#===TOP LINE RIGHT===# \nDot > thDot > " + thDotData.tlRight.x + "," + thDotData.tlRight.y);
         calcDotData.tlRight = findDotNearBoundary(thDotData.tlRight);
         Logger.logOCV("#===RIGHT LINE TOP===# \nDot > thDot > " + thDotData.rlTop.x + "," + thDotData.rlTop.y);
         calcDotData.rlTop = findDotNearBoundary(thDotData.rlTop);
         Logger.logOCV("#===RIGHT LINE MID===# \nDot > thDot > " + thDotData.rlMid.x + "," + thDotData.rlMid.y);
-        calcDotData.rlMid = findDotNearMiddle(thDotData.rlMid);
+        calcDotData.rlMid = findDotNearVerticalMiddle(thDotData.rlMid);
         Logger.logOCV("#===RIGHT LINE BOTTOM===# \nDot > thDot > " + thDotData.rlBottom.x + "," + thDotData.rlBottom.y);
         calcDotData.rlBottom = findDotNearBoundary(thDotData.rlBottom);
         Logger.logOCV("#===BOTTOM LINE LEFT===# \nDot > thDot > " + thDotData.blLeft.x + "," + thDotData.blLeft.y);
         calcDotData.blLeft = findDotNearBoundary(thDotData.blLeft);
+        Logger.logOCV("#===BOTTOM LINE MID===# \nDot > thDot > " + thDotData.blMid.x + "," + thDotData.blMid.y);
+        calcDotData.blMid = findDotNearHorizontalMiddle(thDotData.blMid);
         Logger.logOCV("#===BOTTOM LINE RIGHT===# \nDot > thDot > " + thDotData.blRight.x + "," + thDotData.blRight.y);
         calcDotData.blRight = findDotNearBoundary(thDotData.blRight);
         Logger.logOCV("#===LEFT LINE TOP===# \nDot > thDot > " + thDotData.llTop.x + "," + thDotData.llTop.y);
         calcDotData.llTop = findDotNearBoundary(thDotData.llTop);
         Logger.logOCV("#===LEFT LINE MID===# \nDot > thDot > " + thDotData.llMid.x + "," + thDotData.llMid.y);
-        calcDotData.llMid = findDotNearMiddle(thDotData.llMid);
+        calcDotData.llMid = findDotNearVerticalMiddle(thDotData.llMid);
         Logger.logOCV("#===LEFT LINE BOTTOM===# \nDot > thDot > " + thDotData.llBottom.x + "," + thDotData.llBottom.y);
         calcDotData.llBottom = findDotNearBoundary(thDotData.llBottom);
         return calcDotData;
@@ -111,7 +117,23 @@ public class SecondaryDotHelper extends BaseDotHelper {
         return dot;
     }
 
-    private Dot findDotNearMiddle(Dot thDot) {
+    private Dot findDotNearHorizontalMiddle(Dot thDot) {
+        setSquarePixel = new HashSet<>();
+        Dot dot = findDot(thDot, 2, 2);
+        if (dot == null)
+            dot = findDot(thDot, 4, 4);
+        if (dot == null)
+            dot = findDot(thDot, 6, 6);
+        if (dot == null)
+            dot = findDot(thDot, 8, 8);
+        if (dot == null)
+            dot = findDot(thDot, 8, 12);
+        if (dot == null)
+            dot = findDot(thDot, 12, 16);
+        return dot;
+    }
+
+    private Dot findDotNearVerticalMiddle(Dot thDot) {
         setSquarePixel = new HashSet<>();
         Dot dot = findDot(thDot, 2, 2);
         if (dot == null)
@@ -211,11 +233,13 @@ public class SecondaryDotHelper extends BaseDotHelper {
     public void drawCalculatedIdentityDots(Bitmap elementBitmap) {
         int color = Color.argb(250, 250, 20, 200);
         drawDot(elementBitmap, color, calcDotData.tlLeft);
+        drawDot(elementBitmap, color, calcDotData.tlMid);
         drawDot(elementBitmap, color, calcDotData.tlRight);
         drawDot(elementBitmap, color, calcDotData.rlTop);
         drawDot(elementBitmap, color, calcDotData.rlMid);
         drawDot(elementBitmap, color, calcDotData.rlBottom);
         drawDot(elementBitmap, color, calcDotData.blLeft);
+        drawDot(elementBitmap, color, calcDotData.blMid);
         drawDot(elementBitmap, color, calcDotData.blRight);
         drawDot(elementBitmap, color, calcDotData.llTop);
         drawDot(elementBitmap, color, calcDotData.llMid);
@@ -225,11 +249,13 @@ public class SecondaryDotHelper extends BaseDotHelper {
     public void drawTheoreticalIdentityDots(Bitmap elementBitmap) {
         int color = Color.argb(250, 250, 20, 200);
         drawDot(elementBitmap, color, thDotData.tlLeft);
+        drawDot(elementBitmap, color, thDotData.tlMid);
         drawDot(elementBitmap, color, thDotData.tlRight);
         drawDot(elementBitmap, color, thDotData.rlTop);
         drawDot(elementBitmap, color, thDotData.rlMid);
         drawDot(elementBitmap, color, thDotData.rlBottom);
         drawDot(elementBitmap, color, thDotData.blLeft);
+        drawDot(elementBitmap, color, thDotData.blMid);
         drawDot(elementBitmap, color, thDotData.blRight);
         drawDot(elementBitmap, color, thDotData.llTop);
         drawDot(elementBitmap, color, thDotData.llMid);

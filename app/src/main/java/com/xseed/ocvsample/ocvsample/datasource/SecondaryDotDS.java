@@ -13,7 +13,7 @@ public class SecondaryDotDS {
         tlLeft means top line left dot
         rlMid means right line mid dot
         */
-    public Dot tlLeft, tlRight, rlTop, rlMid, rlBottom, blRight, blLeft, llBottom, llMid, llTop;
+    public Dot tlLeft, tlMid, tlRight, rlTop, rlMid, rlBottom, blRight, blMid, blLeft, llBottom, llMid, llTop;
     /*
         secondary lines between identity dots
     */
@@ -21,6 +21,10 @@ public class SecondaryDotDS {
 
     public void setTopLineLeftDot(int x, int y) {
         tlLeft = new Dot(x, y);
+    }
+
+    public void setTopLineMidDot(int x, int y) {
+        tlMid = new Dot(x, y);
     }
 
     public void setTopLineRightDot(int x, int y) {
@@ -41,6 +45,10 @@ public class SecondaryDotDS {
 
     public void setBottomLineLeftDot(int x, int y) {
         blLeft = new Dot(x, y);
+    }
+
+    public void setBottomLineMidDot(int x, int y) {
+        blMid = new Dot(x, y);
     }
 
     public void setBottomLineRightDot(int x, int y) {
@@ -98,11 +106,13 @@ public class SecondaryDotDS {
     public String toString() {
         return "SecondaryDotDS{" +
                 "tlLeft=" + tlLeft +
+                ", tlMid=" + tlMid +
                 ", tlRight=" + tlRight +
                 ", rlTop=" + rlTop +
                 ", rlMid=" + rlMid +
                 ", rlBottom=" + rlBottom +
                 ", blRight=" + blRight +
+                ", blMid=" + blMid +
                 ", blLeft=" + blLeft +
                 ", llBottom=" + llBottom +
                 ", llMid=" + llMid +
@@ -111,7 +121,9 @@ public class SecondaryDotDS {
     }
 
     public boolean isValid() {
-        return tlLeft != null && tlRight != null && llTop != null && llMid != null && llBottom != null
-                && blLeft != null && blRight != null && rlTop != null && rlMid != null && rlBottom != null;
+        return tlLeft != null && tlMid != null && tlRight != null &&
+                llTop != null && llMid != null && llBottom != null &&
+                blLeft != null && blMid != null && blRight != null &&
+                rlTop != null && rlMid != null && rlBottom != null;
     }
 }

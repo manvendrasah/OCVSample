@@ -82,6 +82,7 @@ public class SheetConstants {
     public static final int DIST_LEFT_RIGHT = 426;// distance between top left and top right dots
     public static final int DIST_TOP_BOTTOM = 565;// distance between top left and bottom left dots
     public static final int DIST_TLLEFT = 40; // distance of (secondary) top line left dot from top left (primary) dot
+    public static final int DIST_TLMID = 213; // distance of (secondary) top line left dot from top left (primary) dot
     public static final int DIST_TLRIGHT = 26;// distance of (secondary) top line right dot from top right (primary) dot
     public static final int DIST_LLTOP = 51;// distance of (secondary) left line top dot from top left (primary) dot
     public static final int DIST_LLMID = 272;// distance of (secondary)left line mid dot from top left (primary) dot
