@@ -107,13 +107,13 @@ public class SecondaryDotDS {
         return "SecondaryDotDS{" +
                 "tlLeft=" + tlLeft +
                 ", tlMid=" + tlMid +
-                ", tlRight=" + tlRight +
+                ", tlRight=" + tlRight + "\n" +
                 ", rlTop=" + rlTop +
                 ", rlMid=" + rlMid +
-                ", rlBottom=" + rlBottom +
+                ", rlBottom=" + rlBottom + "\n" +
                 ", blRight=" + blRight +
                 ", blMid=" + blMid +
-                ", blLeft=" + blLeft +
+                ", blLeft=" + blLeft + "\n" +
                 ", llBottom=" + llBottom +
                 ", llMid=" + llMid +
                 ", llTop=" + llTop +

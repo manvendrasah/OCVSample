@@ -90,8 +90,8 @@ public final class ConfigDS {
             config2.minDist = 25;
             config2.minRadius = 7;
             config2.maxRadius = 20;
-            config2.param1 = 12;
-            config2.param2 = 28;
+            config2.param1 = 11;
+            config2.param2 = 25;
             config2.topLeftX = 0;
             config2.topLeftY = 0;
         }

@@ -35,8 +35,8 @@ public class MatDS {
             answersDetectedBitmap,// bitmap of answerMat with detected answers marked
             elementBitmap; // bitmap of original image for drawing elements
 
-    public static final double PART_MULTIPLIER1 = 0.55;
-    public static final double PART_MULTIPLIER2 = 0.45;
+    public static final double PART_MULTIPLIER1 = 0.4;
+    public static final double PART_MULTIPLIER2 = 0.6;
 
     public void createBaseBitmap(FrameModel frame) {
         BitmapFactory.Options options = new BitmapFactory.Options();

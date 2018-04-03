@@ -31,6 +31,8 @@ public class SecondaryDotHelper extends BaseDotHelper {
     public SecondaryDotHelper(PrimaryDotDS primaryDotData, Bitmap bitmap) {
         this.primaryDotData = primaryDotData;
         this.bitmap = bitmap;
+        setConstants();
+        calcDotData = new SecondaryDotDS();
     }
 
     public SecondaryDotDS getTheoreticalIdentityDots() {
@@ -64,34 +66,36 @@ public class SecondaryDotHelper extends BaseDotHelper {
         thDotData.llBottom = Utility.getDotBetweenDots(bottomLeft, topLeft, SheetConstants.DIST_LLBOTTOM, SheetConstants.DIST_TOP_BOTTOM);
     }
 
-    public SecondaryDotDS searchForDots() {
-        setConstants();
-        calcDotData = new SecondaryDotDS();
-        Logger.logOCV("#===TOP LINE LEFT===# \nDot > thDot > " + thDotData.tlLeft.x + "," + thDotData.tlLeft.y);
-        calcDotData.tlLeft = findDotNearBoundary(thDotData.tlLeft);
-        Logger.logOCV("#===TOP LINE MID===# \nDot > thDot > " + thDotData.tlMid.x + "," + thDotData.tlMid.y);
-        calcDotData.tlMid = findDotNearHorizontalMiddle(thDotData.tlMid);
-        Logger.logOCV("#===TOP LINE RIGHT===# \nDot > thDot > " + thDotData.tlRight.x + "," + thDotData.tlRight.y);
-        calcDotData.tlRight = findDotNearBoundary(thDotData.tlRight);
+    public void searchForVerticalDots() {
         Logger.logOCV("#===RIGHT LINE TOP===# \nDot > thDot > " + thDotData.rlTop.x + "," + thDotData.rlTop.y);
         calcDotData.rlTop = findDotNearBoundary(thDotData.rlTop);
         Logger.logOCV("#===RIGHT LINE MID===# \nDot > thDot > " + thDotData.rlMid.x + "," + thDotData.rlMid.y);
         calcDotData.rlMid = findDotNearVerticalMiddle(thDotData.rlMid);
         Logger.logOCV("#===RIGHT LINE BOTTOM===# \nDot > thDot > " + thDotData.rlBottom.x + "," + thDotData.rlBottom.y);
         calcDotData.rlBottom = findDotNearBoundary(thDotData.rlBottom);
-        Logger.logOCV("#===BOTTOM LINE LEFT===# \nDot > thDot > " + thDotData.blLeft.x + "," + thDotData.blLeft.y);
-        calcDotData.blLeft = findDotNearBoundary(thDotData.blLeft);
-        Logger.logOCV("#===BOTTOM LINE MID===# \nDot > thDot > " + thDotData.blMid.x + "," + thDotData.blMid.y);
-        calcDotData.blMid = findDotNearHorizontalMiddle(thDotData.blMid);
-        Logger.logOCV("#===BOTTOM LINE RIGHT===# \nDot > thDot > " + thDotData.blRight.x + "," + thDotData.blRight.y);
-        calcDotData.blRight = findDotNearBoundary(thDotData.blRight);
+
         Logger.logOCV("#===LEFT LINE TOP===# \nDot > thDot > " + thDotData.llTop.x + "," + thDotData.llTop.y);
         calcDotData.llTop = findDotNearBoundary(thDotData.llTop);
         Logger.logOCV("#===LEFT LINE MID===# \nDot > thDot > " + thDotData.llMid.x + "," + thDotData.llMid.y);
         calcDotData.llMid = findDotNearVerticalMiddle(thDotData.llMid);
         Logger.logOCV("#===LEFT LINE BOTTOM===# \nDot > thDot > " + thDotData.llBottom.x + "," + thDotData.llBottom.y);
         calcDotData.llBottom = findDotNearBoundary(thDotData.llBottom);
-        return calcDotData;
+    }
+
+    public void searchForHorizontalDots() {
+        Logger.logOCV("#===TOP LINE LEFT===# \nDot > thDot > " + thDotData.tlLeft.x + "," + thDotData.tlLeft.y);
+        calcDotData.tlLeft = findDotNearBoundary(thDotData.tlLeft);
+        Logger.logOCV("#===TOP LINE MID===# \nDot > thDot > " + thDotData.tlMid.x + "," + thDotData.tlMid.y);
+        calcDotData.tlMid = findDotNearHorizontalMiddle(thDotData.tlMid);
+        Logger.logOCV("#===TOP LINE RIGHT===# \nDot > thDot > " + thDotData.tlRight.x + "," + thDotData.tlRight.y);
+        calcDotData.tlRight = findDotNearBoundary(thDotData.tlRight);
+
+        Logger.logOCV("#===BOTTOM LINE LEFT===# \nDot > thDot > " + thDotData.blLeft.x + "," + thDotData.blLeft.y);
+        calcDotData.blLeft = findDotNearBoundary(thDotData.blLeft);
+        Logger.logOCV("#===BOTTOM LINE MID===# \nDot > thDot > " + thDotData.blMid.x + "," + thDotData.blMid.y);
+        calcDotData.blMid = findDotNearHorizontalMiddle(thDotData.blMid);
+        Logger.logOCV("#===BOTTOM LINE RIGHT===# \nDot > thDot > " + thDotData.blRight.x + "," + thDotData.blRight.y);
+        calcDotData.blRight = findDotNearBoundary(thDotData.blRight);
     }
 
     private void setConstants() {
@@ -114,6 +118,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
             dot = findDot(thDot, 8, 8);
         if (dot == null)
             dot = findDot(thDot, 12, 12);
+
         return dot;
     }
 
@@ -171,7 +176,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
                         && isColorDark(bitmap.getPixel(x, y))) {
                     double darkness = getDarknessBoubleCount(bitmap, hp, wp, y, x);
                     Logger.logOCV("Dot > Inside1 > " + x + "," + y + ", darkness = " + darkness);
-                    if (darkness > 0.5 * ap) {
+                    if (darkness > 0.35 * ap) {
                         Point point = getCentreToMaxMatrix(bitmap, hp, y, x, false);
                         Logger.logOCV("Dot > Point > " + point.x + "," + point.y);
                         return new Dot(point.x, point.y);

@@ -28,6 +28,7 @@ public class FrameListener extends AbstractFrameListener {
     ArrayList<Circle> circles = new ArrayList<Circle>();
     protected int operations;
     protected int circleThreadCount;
+    protected int primaryDotThreadCount, secondaryDotThreadCount;
 
     private CircleDS circleData; // datasource for circles detected
     private PrimaryDotDS primaryDotData;  // datasource for boundary dots
@@ -50,6 +51,8 @@ public class FrameListener extends AbstractFrameListener {
         circles = new ArrayList<>();
         operations = 0;
         circleThreadCount = 0;
+        primaryDotThreadCount = 0;
+        secondaryDotThreadCount = 0;
         matDS = new MatDS();
         circleHelper = new CircleHelper();
         primaryDotHelper = new PrimaryDotHelper();
@@ -109,30 +112,66 @@ public class FrameListener extends AbstractFrameListener {
         }.start();
     }
 
+    /* private synchronized void onHalfBoundaryDots() {
+         primaryDotThreadCount--;
+         if (primaryDotThreadCount <= 0) {
+             primaryDotData = primaryDotHelper.getDotData();
+             if (primaryDotData.isValid()) {
+                 Logger.logOCV("primaryDotData > " + primaryDotData.toString());
+                 findIdentityDots();
+             }
+             onBoundaryDotsDetection();
+         }
+     }
+ */
     private void findIdentityDots() {
         operations++;
-      /*  new Thread() {
-            @Override
-            public void run() {
-                super.run();*/
         secondaryDotHelper = new SecondaryDotHelper(primaryDotData, matDS.getBitmapForDotDetection());
         secondaryDotHelper.setTheoreticalIdentityDots();
         Logger.logOCV("time > theoretical identity dots detected : " + (System.currentTimeMillis() - dT));
         Logger.logOCV("Theoretical Identity Dots = " + secondaryDotHelper.getTheoreticalIdentityDots().toString());
-        secondaryDotData = secondaryDotHelper.searchForDots();
-//                Logger.logOCV("Calculated Identity Dots = " + secondaryDotHelper.getCalculatedIdentityDots().toString());
-        Logger.logOCV("time > identity dots detected : " + (System.currentTimeMillis() - dT));
-        handler.post(new Runnable() {
+        new Thread() {
             @Override
             public void run() {
-                onIdentityDotsDetection();
+                super.run();
+                secondaryDotThreadCount++;
+                Logger.logOCV("time > vertical identity dots detection  START > " + (System.currentTimeMillis() - dT));
+                secondaryDotHelper.searchForVerticalDots();
+                Logger.logOCV("time > vertical identity dots detected : " + (System.currentTimeMillis() - dT));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onHalfIdentityDots();
+                    }
+                });
             }
-        });
-            /*}
-        }.start();*/
+        }.start();
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                secondaryDotThreadCount++;
+                Logger.logOCV("time > horizontal identity dots detection  START > " + (System.currentTimeMillis() - dT));
+                secondaryDotHelper.searchForHorizontalDots();
+                Logger.logOCV("time > horizontal identity dots detected : " + (System.currentTimeMillis() - dT));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onHalfIdentityDots();
+                    }
+                });
+            }
+        }.start();
     }
 
-    /*    divide image into two halves and do circle detection parallelly
+    private synchronized void onHalfIdentityDots() {
+        secondaryDotThreadCount--;
+        if (secondaryDotThreadCount <= 0) {
+            onIdentityDotsDetection();
+        }
+    }
+
+    /*    divide image mat into two halves and do circle detection parallelly
         then combine circles detected*/
     private void findCircles() {
         operations++;
@@ -205,6 +244,8 @@ public class FrameListener extends AbstractFrameListener {
 
     public void onIdentityDotsDetection() {
         operations--;
+        secondaryDotData = secondaryDotHelper.getCalculatedIdentityDots();
+        Logger.logOCV("Identity Dots > \n" + secondaryDotData.toString());
         checkOperationCount();
     }
 
@@ -221,6 +262,9 @@ public class FrameListener extends AbstractFrameListener {
                 return;
             }
             if (!secondaryDotData.isValid()) {
+                secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
+                primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
+                postBitmap(matDS.getElementBitmap(), "TheoryIdDots");
                 postError(ErrorType.TYPE9);
                 return;
             }
@@ -277,7 +321,6 @@ public class FrameListener extends AbstractFrameListener {
                     primaryDotHelper.drawLinesOnMat(matDS.getElementMat());
                     circleHelper.drawCirclesOnMat(matDS.getElementMat());
                     primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
-//                    secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
                     secondaryDotHelper.drawCalculatedIdentityDots(matDS.getElementBitmap());
                     postBitmap(matDS.getElementBitmap(), TAG_ELEMENTS);
                 }
