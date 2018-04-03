@@ -66,7 +66,7 @@ public class BlobHelper extends AbstractBlobHelper {
     }
 
 
-    public void drawBlobsOnMat(Mat mat) {
+    public synchronized void drawBlobsOnMat(Mat mat) {
         for (Blob blob : blobData.gradeBlobs) {
             Imgproc.circle(mat, blob.circle.center, (int) Math.ceil(cRatios.avgIdGradeRadius), new Scalar(10, 255, 10), 2);
             //Imgproc.rectangle(mat, getTopLeftPointOfCircle(blob), getBottomRightPointOfCircle(blob), new Scalar(10, 255, 10), 2);

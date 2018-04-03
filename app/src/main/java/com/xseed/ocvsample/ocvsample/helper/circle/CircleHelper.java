@@ -63,17 +63,19 @@ public class CircleHelper extends AbstractCircleHelper {
         Line leftLine = secondaryDotDS.getLeftLine();
         Line rightLine = secondaryDotDS.getRightLine();
         int mapSize = circleData.answerCircleMap.size();
+
         for (int k = 0; k < mapSize; ++k) {
             ArrayList<Circle> row = circleData.answerCircleMap.get(k);
             int rowSize = row.size();
             if (rowSize < 2) {
-                if (errorType == ErrorType.TYPE10) {
-                    /*Already a row is missing, this row would also be removed
-                            -> throw 2 rows missing error*/
+                errorType = ErrorType.TYPE4;
+               /* if (errorType == ErrorType.TYPE10) {
+                    *//*Already a row is missing, this row would also be removed
+                            -> throw 2 rows missing error*//*
                     errorType = ErrorType.TYPE11;
                     return false;
                 } else
-                    errorType = ErrorType.TYPE4;
+                errorType = ErrorType.TYPE4;*/
             } else {
                 Circle circle0 = row.get(0);
                 Circle circleN = row.get(rowSize - 1);
@@ -213,10 +215,11 @@ public class CircleHelper extends AbstractCircleHelper {
 
     @Override
     protected void resolveErrorCasesInAnswerCircles() {
-        Logger.logOCV("resolveErrorCasesInAnswerCircles > errorType = " + errorType);
+        Logger.logOCV("resolveErrorCasesInAnswerCircles > errorType = " + errorType + "\n" + circleData.answerCircleMap.toString());
         if (errorType != ErrorType.TYPE4 && errorType != ErrorType.TYPE10) {
             return;
         }
+
         int ind = -1;
         // less then two circles have been obtained, and the row has been cleared
         // entry for row still there and is used for resolving straight forward
@@ -225,6 +228,7 @@ public class CircleHelper extends AbstractCircleHelper {
                 if (circleData.answerCircleMap.get(i).isEmpty()) {
                     ind = i;
                     i = SheetConstants.NUM_ROWS_ANSWERS;
+                    break;
                 }
             }
             Logger.logOCV("4. found index missing = " + ind);
@@ -282,7 +286,7 @@ public class CircleHelper extends AbstractCircleHelper {
 
         for (int i = 0; i < len; ++i) {
             ArrayList<Circle> list = circleData.idCircleMap.get(i);
-            int size = list.size();
+            int size = list == null ? 0 : list.size();
             for (int j = 0; j < size - 1; ++j) {
                 Circle circle = list.get(j);
                 Circle circle1 = list.get(j + 1);

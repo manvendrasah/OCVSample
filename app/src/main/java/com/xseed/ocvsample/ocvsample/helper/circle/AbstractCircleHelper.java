@@ -49,6 +49,7 @@ public abstract class AbstractCircleHelper {
 
     protected int rows, cols;
     protected CircleRatios cRatios;
+    protected int wrongRowIndex = -1;
     protected int errorType = ErrorType.TYPE0;
 
     public CircleDS getCircleData() {
@@ -93,6 +94,11 @@ public abstract class AbstractCircleHelper {
     }
 
     private boolean extrapolatedAnswerUndetectedCircles() {
+        if (getActualMapSize(circleData.answerCircleMap) < SheetConstants.NUM_ROWS_ANSWERS - 1) {
+//            more than 1 row is missing
+            errorType = ErrorType.TYPE11;
+            return false;
+        }
         boolean canExtrapolateOuterAnswers = extrapolateOuterAnswerUndetectedCircles();
         if (!canExtrapolateOuterAnswers) return false;
         boolean canExtrapolateMiddleAnswers = extrapolateMiddleAnswerUndetectedCircles();
@@ -172,23 +178,84 @@ public abstract class AbstractCircleHelper {
                 circleData.answerCircleMap.put(i, new ArrayList<Circle>());
             }
         }
+        filterWrongAnswerRows();
         // return with error if more than two rows are absent
         // case where one row is absent will be handled in later process
-        if (mapSize != SheetConstants.NUM_ROWS_ANSWERS) {
-            if (mapSize > SheetConstants.NUM_ROWS_ANSWERS) {
+        int actualMapSize = getActualMapSize(circleData.answerCircleMap);
+        Logger.logOCV("actualMapSize = " + actualMapSize);
+        if (actualMapSize != SheetConstants.NUM_ROWS_ANSWERS) {
+            if (actualMapSize > SheetConstants.NUM_ROWS_ANSWERS) {
                 errorType = ErrorType.TYPE12;
                 return false;
-            } else if (mapSize == SheetConstants.NUM_ROWS_ANSWERS - 1) {
+            } else if (actualMapSize == SheetConstants.NUM_ROWS_ANSWERS - 1) {
                 errorType = ErrorType.TYPE10;
-            } else if (mapSize < SheetConstants.NUM_ROWS_ANSWERS - 1) {
+            } else if (actualMapSize < SheetConstants.NUM_ROWS_ANSWERS - 1) {
                 errorType = ErrorType.TYPE11;
                 return false;
             }
         }
         // all circles not in answer rows are presumed as id/grade circles, but need filtering
         circleData.idGradeCircleList = tempList;
-        Logger.logOCV(circleData.toString());
+        Logger.logOCV("INITIAL >" + circleData.toString());
         return true;
+    }
+
+    private void filterWrongAnswerRows() {
+        Logger.logOCV("filterWrongAnswerRows");
+        int size = circleData.answerCircleMap.size();
+        Line midLine = secondaryDotDS.getMidLine();
+        // check for topmost answer row
+        int index = size - 1;
+        ArrayList<Circle> list = circleData.answerCircleMap.get(index);
+        if (!list.isEmpty()) {
+            Circle c0 = list.get(0);
+            double perpDist = Utility.circleToLineDistance(midLine, c0);
+            if (perpDist < 1.5d * avgAnswerRadius) {
+                // this is the topmost answer line correctly detected
+                // simple return
+                return;
+            } else {
+                double topDist = Utility.circleToLineDistance(primaryDotDS.getTopLine(), c0);
+                double bottomDist = Utility.circleToLineDistance(primaryDotDS.getBottomLine(), c0);
+                if (bottomDist > topDist) {
+                    // i.e. circles have been detected in idGrade circle area
+                    circleData.idGradeCircleList.addAll(list);
+                    circleData.answerCircleMap.put(index, new ArrayList<Circle>());
+                    Logger.logOCV("Cleared > row > " + index);
+                }
+            }
+        } else {
+            // check for second topmost answer row
+            index--;
+            list = circleData.answerCircleMap.get(index);
+            if (!list.isEmpty()) {
+                Circle c0 = list.get(0);
+                double perpDist = Utility.circleToLineDistance(midLine, c0);
+                if (perpDist < 1.5d * avgAnswerRadius) {
+                    // this is the topmost answer line correctly detected
+                    // simple return
+                    return;
+                } else {
+                    double topDist = Utility.circleToLineDistance(primaryDotDS.getTopLine(), c0);
+                    double bottomDist = Utility.circleToLineDistance(primaryDotDS.getBottomLine(), c0);
+                    if (bottomDist > topDist) {
+                        // i.e. circles have been detected in idGrade circle area
+                        circleData.idGradeCircleList.addAll(list);
+                        circleData.answerCircleMap.put(index, new ArrayList<Circle>());
+                        Logger.logOCV("Cleared > row > " + index);
+                    }
+                }
+            }
+        }
+    }
+
+    protected int getActualMapSize(TreeMap<Integer, ArrayList<Circle>> circleMap) {
+        int mapSize = 0;
+        for (ArrayList<Circle> list : circleMap.values()) {
+            if (!list.isEmpty())
+                mapSize++;
+        }
+        return mapSize;
     }
 
     private Line getBottomLine(TreeMap<Integer, ArrayList<Circle>> map, int i) {
@@ -576,7 +643,7 @@ public abstract class AbstractCircleHelper {
     }
 
     protected int findMissingAnswerRowIndex() {
-        Logger.logOCV("findMissingAnswerRowIndex");
+        Logger.logOCV("findMissingAnswerRowIndex > errorType = " + errorType);
         int missingIndex = -1;
         int mapSize = circleData.answerCircleMap.size();
 

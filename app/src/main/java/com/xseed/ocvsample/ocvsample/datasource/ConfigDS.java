@@ -34,12 +34,13 @@ public final class ConfigDS {
     }
 
     public OCVCircleConfig getConfig() {
-        if (detectedCircleCountList.size() < 2) {
+        return getConfig2();
+       /* if (detectedCircleCountList.size() < 2) {
             Logger.logOCV("Config selected = 1");
             return getConfig1();
         } else {
             return getConfigBaseOnCirclesDetected();
-        }
+        }*/
     }
 
     private OCVCircleConfig getConfigBaseOnCirclesDetected() {
@@ -70,7 +71,7 @@ public final class ConfigDS {
     private OCVCircleConfig getConfig1() {
         if (config1 == null) {
             config1 = new OCVCircleConfig();
-            config1.dp = 1.4d;
+            config1.dp = 1.3d;
             config1.minDist = 25;
             config1.minRadius = 7;
             config1.maxRadius = 20;
