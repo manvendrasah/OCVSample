@@ -26,9 +26,8 @@ import java.util.ArrayList;
 public class FrameListener extends AbstractFrameListener {
 
     ArrayList<Circle> circles = new ArrayList<Circle>();
-    protected int operations;
-    protected int circleThreadCount;
-    protected int primaryDotThreadCount, secondaryDotThreadCount;
+    protected volatile int operations;
+    protected volatile int circleThreadCount, primaryDotThreadCount, secondaryDotThreadCount, blobThreadCount;
 
     private CircleDS circleData; // datasource for circles detected
     private PrimaryDotDS primaryDotData;  // datasource for boundary dots
@@ -53,6 +52,7 @@ public class FrameListener extends AbstractFrameListener {
         circleThreadCount = 0;
         primaryDotThreadCount = 0;
         secondaryDotThreadCount = 0;
+        blobThreadCount = 0;
         matDS = new MatDS();
         circleHelper = new CircleHelper();
         primaryDotHelper = new PrimaryDotHelper();
@@ -250,6 +250,7 @@ public class FrameListener extends AbstractFrameListener {
     }
 
     private void checkOperationCount() {
+        Logger.logOCV("checkOperationCount > operations = " + operations);
         if (operations <= 0) {
             if (!primaryDotData.isValid()) {
                 postError(ErrorType.TYPE1);
@@ -293,23 +294,60 @@ public class FrameListener extends AbstractFrameListener {
                 circleData = circleHelper.getCircleData();
                 drawElementsOnMat();
                 circleHelper.transformAnswerCircleMap();
-                Logger.logOCV("blob detection START time = " + (System.currentTimeMillis() - dT));
 
-                blobHelper = new BlobHelper(primaryDotData, circleData, matDS.getBitmapForBlobDetection(), cRatios);
-                blobHelper.findBlobsInCircles();
-                Logger.logOCV("blob detection END time = " + (System.currentTimeMillis() - dT));
-                blobHelper.drawBlobsOnMat(matDS.getAnswerMatToDraw());
-                Logger.logOCV("blob draw on mat time = " + (System.currentTimeMillis() - dT));
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        postBitmap(matDS.getAnswerBitmapToDraw(), TAG_BLOBS_DETECTED);
-                        postSuccess();
+                        findBlobs();
                     }
                 });
-                Logger.logOCV("circle&Line time = " + (System.currentTimeMillis() - dT));
             }
         }.start();
+    }
+
+    private void findBlobs() {
+        Logger.logOCV("blob detection START time = " + (System.currentTimeMillis() - dT));
+        blobHelper = new BlobHelper(primaryDotData, circleData, matDS.getBitmapForBlobDetection(), cRatios);
+
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                blobThreadCount++;
+                blobHelper.findBlobsInSecondHalfCircles();
+                Logger.logOCV("2nd half blobs detected > time >" + (System.currentTimeMillis() - dT));
+                onHalfBlobsDetected();
+            }
+        }.start();
+
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                blobThreadCount++;
+                blobHelper.findBlobsInFirstHalfCircles();
+                Logger.logOCV("1st half blobs detected > time >" + (System.currentTimeMillis() - dT));
+                onHalfBlobsDetected();
+            }
+        }.start();
+    }
+
+    private synchronized void onHalfBlobsDetected() {
+        blobThreadCount--;
+        Logger.logOCV("onHalfBlobsDetected () > blobThreadCount > " + blobThreadCount);
+        if (blobThreadCount <= 0) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Logger.logOCV("blob detection END time = " + (System.currentTimeMillis() - dT));
+                    blobHelper.drawBlobsOnMat(matDS.getAnswerMatToDraw());
+                    Logger.logOCV("blob draw on mat time = " + (System.currentTimeMillis() - dT));
+                    postBitmap(matDS.getAnswerBitmapToDraw(), TAG_BLOBS_DETECTED);
+                    postSuccess();
+                    Logger.logOCV("PROCESS COMPLETION time = " + (System.currentTimeMillis() - dT));
+                }
+            });
+        }
     }
 
     private void drawElementsOnMat() {

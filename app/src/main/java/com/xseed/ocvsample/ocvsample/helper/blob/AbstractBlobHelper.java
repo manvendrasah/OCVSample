@@ -29,10 +29,17 @@ public abstract class AbstractBlobHelper {
     protected Bitmap bitmap;
 
     // template design pattern to assure proper functional calls
-    public BlobDS findBlobsInCircles() {
+    public void findBlobsInFirstHalfCircles() {
         findGradeBlobs();
         findIdBlobs();
-        findAnswersBlobs();
+        findAnswersBlobs(1, 12);
+    }
+
+    public void findBlobsInSecondHalfCircles() {
+        findAnswersBlobs(13);
+    }
+
+    public BlobDS getBlobData() {
         return blobData;
     }
 
@@ -40,7 +47,9 @@ public abstract class AbstractBlobHelper {
 
     protected abstract void findIdBlobs();
 
-    protected abstract void findAnswersBlobs();
+    protected abstract void findAnswersBlobs(int startIndex);
+
+    protected abstract void findAnswersBlobs(int startIndex, int endIndex);
 
     protected double getDarknessInCircle(Circle ci, double radius) {
         Point center = ci.center;

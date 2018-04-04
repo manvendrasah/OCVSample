@@ -3,6 +3,7 @@ package com.xseed.ocvsample.ocvsample.datasource;
 import com.xseed.ocvsample.ocvsample.pojo.Blob;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by Manvendra Sah on 15/09/17.
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 
 public class BlobDS {
 
-    public ArrayList<Blob> answerBlobs = new ArrayList<>();
+    public HashMap<Integer, Blob> answerBlobs = new HashMap<>();
     public ArrayList<Blob> idBlobs = new ArrayList<>();
     public ArrayList<Blob> gradeBlobs = new ArrayList<>();
 
@@ -22,7 +23,7 @@ public class BlobDS {
         idBlobs.add(blob);
     }
 
-    public void setAnswerBlob(Blob blob) {
-        answerBlobs.add(blob);
+    public void setAnswerBlob(int index, Blob blob) {
+        answerBlobs.put(index, blob);
     }
 }

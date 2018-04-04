@@ -176,7 +176,7 @@ public class SecondaryDotHelper extends BaseDotHelper {
                         && isColorDark(bitmap.getPixel(x, y))) {
                     double darkness = getDarknessBoubleCount(bitmap, hp, wp, y, x);
                     Logger.logOCV("Dot > Inside1 > " + x + "," + y + ", darkness = " + darkness);
-                    if (darkness > 0.35 * ap) {
+                    if (darkness > 0.5 * ap) {
                         Point point = getCentreToMaxMatrix(bitmap, hp, y, x, false);
                         Logger.logOCV("Dot > Point > " + point.x + "," + point.y);
                         return new Dot(point.x, point.y);
