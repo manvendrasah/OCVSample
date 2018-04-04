@@ -42,9 +42,11 @@ public abstract class AbstractFrameListener implements Camera.PictureCallback {
         dT = System.currentTimeMillis();
         refreshStateVariables();
         Camera.Parameters parameters = camera.getParameters();
+//        Logger.logOCV("onPictureTaken > picture > "+parameters.getPictureSize().width + ","+parameters.getPictureSize().height);
+//        Logger.logOCV("onPictureTaken > preview > "+parameters.getPreviewSize().width+","+parameters.getPreviewSize().height);
         FrameModel fModel = new FrameModel(data);
-        fModel.setPreviewWidth(parameters.getPreviewSize().width);
-        fModel.setPreviewHeight(parameters.getPreviewSize().height);
+        fModel.setPreviewWidth(parameters.getPictureSize().width);
+        fModel.setPreviewHeight(parameters.getPictureSize().height);
         fModel.setRotation(getRotation());
         validateFrame(fModel);
     }

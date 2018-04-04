@@ -50,4 +50,7 @@ public class FrameModel {
         this.rotation = rotation;
     }
 
+    public String getDataString(){
+        return "FRAME > w,h = "+previewWidth+","+previewHeight + "   rotation = "+rotation;
+    }
 }

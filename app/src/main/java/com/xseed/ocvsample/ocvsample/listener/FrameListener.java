@@ -63,7 +63,7 @@ public class FrameListener extends AbstractFrameListener {
         if (frame != null) {
             matDS.createBaseBitmap(frame);
             Logger.logOCV("time > getBitmapFromByte =  " + (System.currentTimeMillis() - dT));
-            matDS.createBaseMat(frame);
+            matDS.createBaseMat(frame.getRotation());
             Logger.logOCV("time > getBaseRotatedMat =  " + (System.currentTimeMillis() - dT));
             findCircles();
             prepareMatForBlobDetection();

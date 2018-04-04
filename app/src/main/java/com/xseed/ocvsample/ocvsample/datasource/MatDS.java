@@ -5,6 +5,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 
 import com.xseed.ocvsample.ocvsample.pojo.FrameModel;
+import com.xseed.ocvsample.ocvsample.utility.Logger;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -38,22 +39,31 @@ public class MatDS {
     public static final double PART_MULTIPLIER1 = 0.5;
     public static final double PART_MULTIPLIER2 = 0.5;
 
+    public Bitmap getBaseBitmap() {
+        return baseBitmap;
+    }
+
     public void createBaseBitmap(FrameModel frame) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Config.ARGB_8888;
         options.inMutable = true;
+        if (frame.getPreviewWidth() > 800) {
+            options.inSampleSize = 2;
+            Logger.logOCV("Sample Size = 2");
+        }
         baseBitmap = BitmapFactory.decodeByteArray(frame.getData(), 0, frame.getData().length, options);
+        Logger.logOCV("Base Bitmap > " + baseBitmap.getWidth() + "," + baseBitmap.getHeight());
     }
 
-    public void createBaseMat(FrameModel frame) {
+    public void createBaseMat(int rotation) {
         baseMat = new Mat();
         Utils.bitmapToMat(baseBitmap, baseMat);
         /*rotate mat instead of bitmap to save memory and processing time*/
-        if (frame.getRotation() == 270) {
+        if (rotation == 270) {
             Core.flip(baseMat, baseMat, 0);
-        } else if (frame.getRotation() == 180) {
+        } else if (rotation == 180) {
             Core.flip(baseMat, baseMat, -1);
-        } else if (frame.getRotation() == 90) {
+        } else if (rotation == 90) {
             Core.flip(baseMat.t(), baseMat, 1);
         }
         // final answers will be drawn onto answer mat
