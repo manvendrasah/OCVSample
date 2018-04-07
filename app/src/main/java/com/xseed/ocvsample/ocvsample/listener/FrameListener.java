@@ -265,7 +265,7 @@ public class FrameListener extends AbstractFrameListener {
             if (!secondaryDotData.isValid()) {
                 secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
                 primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
-                postBitmap(matDS.getElementBitmap(), "TheoryIdDots");
+                postBitmap(matDS.getElementBitmap(), TAG_ID_DOTS);
                 postError(ErrorType.TYPE9);
                 return;
             }

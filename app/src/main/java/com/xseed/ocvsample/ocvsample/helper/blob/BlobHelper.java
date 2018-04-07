@@ -44,6 +44,7 @@ public class BlobHelper extends AbstractBlobHelper {
         Logger.logOCV("PENCIL DETECTION IN ANSWERS -----------------" + startIndex + "," + endIndex);
 
         for (int i = startIndex; i <= endIndex; ++i) {
+            Logger.logOCV("ANSWER > index = " + i);
             Blob blob = getDarkestCircleInList(circleData.transwerCircleMap.get(i), i, SheetConstants.TYPE_ANSWER);
             if (blob != null)
                 blobData.setAnswerBlob(i, blob);
@@ -61,6 +62,7 @@ public class BlobHelper extends AbstractBlobHelper {
         Logger.logOCV("PENCIL DETECTION IN IDS -----------------");
         int ind = 0;
         for (ArrayList<Circle> list : circleData.idCircleMap.values()) {
+            Logger.logOCV("ID > index = " + ind);
             Blob blob = getDarkestCircleInList(list, ind, SheetConstants.TYPE_ID);
             if (blob != null)
                 blobData.setIdBlob(blob);
@@ -72,6 +74,7 @@ public class BlobHelper extends AbstractBlobHelper {
     protected void findGradeBlobs() {
         Logger.logOCV("PENCIL DETECTION IN GRADE -----------------");
         ArrayList<Circle> list = circleData.gradeCircleMap.get(0);
+        Logger.logOCV("GRADE > index = " + 0);
         Blob blob = getDarkestCircleInList(list, 0, SheetConstants.TYPE_GRADE);
         if (blob != null)
             blobData.setGradeBlob(blob);

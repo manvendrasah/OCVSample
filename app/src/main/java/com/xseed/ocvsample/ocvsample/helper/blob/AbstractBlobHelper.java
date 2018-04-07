@@ -69,14 +69,14 @@ public abstract class AbstractBlobHelper {
         return count;
     }
 
-    protected Blob getDarkestCircleInList(ArrayList<Circle> list, int superInd, int type) {
+    protected synchronized Blob getDarkestCircleInList(ArrayList<Circle> list, int superInd, int type) {
         int maxInd = -1;
         double maxDarkness = 0;
         int len = list.size();
         for (int i = 0; i < len; ++i) {
             Circle ci = list.get(i);
             double darkness = getDarknessInCircle(ci, Math.ceil(cRatios.avgAnswerRadius));
-            Logger.logOCV("Blob > circle > " + superInd + " > " + i + " >  darkness = " + darkness);
+            Logger.logOCV("Blob > circle > " + ci.toString() + " > " + superInd + " > " + i + " >  darkness = " + darkness);
             if (darkness > SheetConstants.MIN_DARKNESS && darkness > maxDarkness) {
                 maxInd = i;
                 maxDarkness = darkness;
@@ -85,7 +85,7 @@ public abstract class AbstractBlobHelper {
         if (maxInd == -1) {
             return null;
         } else {
-            Logger.logOCV("MAX BLOB > circle > " + superInd + " > " + maxInd + " >  darkness = " + maxDarkness + " > for > " + list.get(maxInd).toString());
+            Logger.logOCV("MAX BLOB > circle > " + list.get(maxInd).toString() + " > " + +superInd + " > " + maxInd + " >  darkness = " + maxDarkness);
             Blob blob = new Blob(list.get(maxInd), superInd, maxInd, type, maxDarkness);
             return blob;
         }

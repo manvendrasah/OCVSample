@@ -39,15 +39,11 @@ public class MatDS {
     public static final double PART_MULTIPLIER1 = 0.5;
     public static final double PART_MULTIPLIER2 = 0.5;
 
-    public Bitmap getBaseBitmap() {
-        return baseBitmap;
-    }
-
     public void createBaseBitmap(FrameModel frame) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Config.ARGB_8888;
         options.inMutable = true;
-        if (frame.getPreviewWidth() > 800) {
+        if (frame.getPreviewHeight() > 960) {
             options.inSampleSize = 2;
             Logger.logOCV("Sample Size = 2");
         }

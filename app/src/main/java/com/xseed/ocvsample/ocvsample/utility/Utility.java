@@ -152,27 +152,31 @@ public class Utility {
         ei.setType("plain/text");
         ArrayList<String> emails = new ArrayList<String>();
         emails.add("manvendra.sah@xseededucation.com");
-        emails.add("deepak.saxena@xseededucation.com");
-        emails.add("sandeep.kamjula@xseededucation.com");
+        emails.add("vinay.revankar@xseededucation.com");
+//        emails.add("sandeep.kamjula@xseededucation.com");
         emails.add("raj.chourasia@xseededucation.com");
         emails.add("renjith.ponnappan@xseededucation.com");
-        ei.putExtra(Intent.EXTRA_EMAIL, new String[]{"manvendra.sah@xseededucation.com", "deepak.saxena@xseededucation.com",
-                "sandeep.kamjula@xseededucation.com", "raj.chourasia@xseededucation.com", "renjith.ponnappan@xseededucation.com"});
-        ei.putExtra(Intent.EXTRA_SUBJECT, "OCV Error : ");
+        emails.add("rahul.tiwari@xseededucation.com");
+        ei.putExtra(Intent.EXTRA_EMAIL, new String[]{"manvendra.sah@xseededucation.com", "vinay.revankar@xseededucation.com ",
+                /*"sandeep.kamjula@xseededucation.com", */"raj.chourasia@xseededucation.com", "renjith.ponnappan@xseededucation.com","rahul.tiwari@xseededucation.com"});
+        ei.putExtra(Intent.EXTRA_SUBJECT, "OCV : ");
         ei.setType("message/rfc822");
         ArrayList<String> fileList = new ArrayList<String>();
         fileList.add(Environment.getExternalStorageDirectory()
                 + "/Android/data/"
-                + MyApplication.getInstance().getPackageName() + "/DotNCircle.jpg");
-        fileList.add(Environment.getExternalStorageDirectory()
-                + "/Android/data/"
-                + MyApplication.getInstance().getPackageName() + "/BlobDetect.jpg");
+                + MyApplication.getInstance().getPackageName() + "/AdaptThresh.jpg");
         fileList.add(Environment.getExternalStorageDirectory()
                 + "/Android/data/"
                 + MyApplication.getInstance().getPackageName() + "/InitialCircles.jpg");
         fileList.add(Environment.getExternalStorageDirectory()
                 + "/Android/data/"
-                + MyApplication.getInstance().getPackageName() + "/AdaptThresh.jpg");
+                + MyApplication.getInstance().getPackageName() + "/BlobDetect.jpg");
+        fileList.add(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + MyApplication.getInstance().getPackageName() + "/TheoryIdDots.jpg");
+        fileList.add(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + MyApplication.getInstance().getPackageName() + "/Elements.jpg");
         fileList.add(Environment.getExternalStorageDirectory()
                 + "/Android/data/"
                 + MyApplication.getInstance().getPackageName() + "/logFile.txt");

@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,11 +24,11 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.xseed.ocvsample.ocvsample.R;
 import com.xseed.ocvsample.ocvsample.camera.AutoFitSurfaceView;
 import com.xseed.ocvsample.ocvsample.camera.CameraView;
+import com.xseed.ocvsample.ocvsample.listener.AbstractFrameListener;
 import com.xseed.ocvsample.ocvsample.listener.OMRSheetListener;
 import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
@@ -122,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void restoreScanState() {
+        Logger.logOCV("restoreScanState()");
         camPreview.recycleFrames();
         Utility.deleteImageDirectory();
         Utility.deleteLogFile();
@@ -184,11 +186,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         showOverflowMenu(true);
         logScanFailure((dT - sT), errorType);
         hsvFrame.setVisibility(View.VISIBLE);
-        Toast.makeText(MainActivity.this,
-                "Sheet Detection FAILED! " + ErrorType.getErrorString(errorType), Toast.LENGTH_LONG).show();
+        showErrorSnackBar(errorType);
+//        Toast.makeText(MainActivity.this,
+//                "Sheet Detection FAILED! " + ErrorType.getErrorString(errorType), Toast.LENGTH_LONG).show();
         Logger.logOCV("Sheet Detection fail > " + ErrorType.getErrorString(errorType));
         camPreview.startPreview();
         hideProgress();
+    }
+
+    public void showErrorSnackBar(final int errorType) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Snackbar.make(hsvFrame, ErrorType.getErrorMessage(errorType), Snackbar.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void logScanFailure(long l, int errorType) {
@@ -201,12 +213,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onOMRSheetBitmap(final Bitmap bitmap, final String name) {
         Utility.storeImage(bitmap, name);
-        View view = inflater.inflate(R.layout.layout_frame, null);
-        ImageView ivFrame = (ImageView) view.findViewById(R.id.ivFrame);
-        TextView tvName = (TextView) view.findViewById(R.id.tv_frame_name);
-        ivFrame.setImageBitmap(bitmap);
-        tvName.setText(name);
-        llContainer.addView(view, 0);
+        if (name.equals(AbstractFrameListener.TAG_BLOBS_DETECTED)) {
+            View view = inflater.inflate(R.layout.layout_frame, null);
+            ImageView ivFrame = (ImageView) view.findViewById(R.id.ivFrame);
+            TextView tvName = (TextView) view.findViewById(R.id.tv_frame_name);
+            ivFrame.setImageBitmap(bitmap);
+            tvName.setText(name);
+            llContainer.addView(view, 0);
+        }
     }
 
     public void showProgress() {

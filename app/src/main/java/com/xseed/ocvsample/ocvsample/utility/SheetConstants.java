@@ -35,6 +35,7 @@ public class SheetConstants {
     */
     public static final int SEARCH_LENGTH_DIVISOR = 3;
     public static final int MIN_DETECTED_CIRCLES = 50;//85
+    public static final int MIN_DETECTED_IDGRADE_CIRCLES = 8;
     public static final int LOW_THRESHHOLD_DETECTED_CIRCLES = 110;
     public static final double LINE_RATIO_THRESHHOLD = 0.20d;
     /*

@@ -273,7 +273,7 @@ public class CircleHelper extends AbstractCircleHelper {
         /*get avgCcD between two circles*/
         Logger.logOCV("extrapolateIdGradeUndetectedCircles >  avgCcd calculation -------------");
         int len = circleData.idCircleMap.size();
-
+        int totalSize = 0;
         double height = 0.8 * rows;
         double ratioLineLen = cRatios.getBottomToTopLineRatio();
 
@@ -287,6 +287,7 @@ public class CircleHelper extends AbstractCircleHelper {
         for (int i = 0; i < len; ++i) {
             ArrayList<Circle> list = circleData.idCircleMap.get(i);
             int size = list == null ? 0 : list.size();
+            totalSize += size;
             for (int j = 0; j < size - 1; ++j) {
                 Circle circle = list.get(j);
                 Circle circle1 = list.get(j + 1);
@@ -320,6 +321,7 @@ public class CircleHelper extends AbstractCircleHelper {
             return;
         }*/
         int size = list2 == null ? 0 : list2.size();
+        totalSize += size;
         for (int j = 0; j < size - 1; ++j) {
             Circle circle = list2.get(j);
             Circle circle1 = list2.get(j + 1);
@@ -358,6 +360,10 @@ public class CircleHelper extends AbstractCircleHelper {
         }
         Logger.logOCV("extrapolateIdGradeMid > avgCCd > " + avgCcd + "------------------");
 
+        if (totalSize < SheetConstants.MIN_DETECTED_IDGRADE_CIRCLES) {
+            errorType = ErrorType.TYPE13;
+            return false;
+        }
         prepareIdGradeColumnsForExtraPolation();
         extrapolateTopIdGradeCircle(avgCcd, circleData.idCircleMap, false);
         extrapolateTopIdGradeCircle(avgCcd, circleData.gradeCircleMap, true);
@@ -366,9 +372,11 @@ public class CircleHelper extends AbstractCircleHelper {
         extrapolateInnerIdGradeCircles(avgCcd, circleData.gradeCircleMap);
         extrapolateOuterIdGradeCircles(avgCcd, circleData.gradeCircleMap);
         boolean canResolve = resolveSingleEntryColumnsIssue();
-        if (canResolve)
+        if (canResolve) {
+            Logger.logOCV("Final Grade : \n" + circleData.getGradeCircleString());
+            Logger.logOCV("Final Id : \n" + circleData.getIdCircleString());
             return true;
-        else {
+        } else {
             errorType = ErrorType.TYPE8;
             return false;
         }

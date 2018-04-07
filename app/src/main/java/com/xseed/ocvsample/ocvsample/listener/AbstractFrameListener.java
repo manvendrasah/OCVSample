@@ -30,6 +30,7 @@ public abstract class AbstractFrameListener implements Camera.PictureCallback {
     public static final String TAG_ADAPTIVE_THRESHHOLD = "AdaptThresh";
     public static final String TAG_INITIAL_CIRCLES = "InitialCircles";
     public static final String TAG_BLOBS_DETECTED = "BlobDetect";
+    public static final String TAG_ID_DOTS = "TheoryIdDots";
     public static final String TAG_ELEMENTS = "Elements";
 
     public void startProcessingFrame() {
