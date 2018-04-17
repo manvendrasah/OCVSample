@@ -51,28 +51,28 @@ public class PrimaryDotDS {
     }
 
     public Line getTopLine() {
-        if (topLine == null) {
+        if (topLine == null && topLeft != null && topRight != null) {
             topLine = new Line(topLeft.x, topLeft.y, topRight.x, topRight.y);
         }
         return topLine;
     }
 
     public Line getRightLine() {
-        if (rightLine == null) {
+        if (rightLine == null && bottomRight != null && topRight != null) {
             rightLine = new Line(topRight.x, topRight.y, bottomRight.x, bottomRight.y);
         }
         return rightLine;
     }
 
     public Line getBottomLine() {
-        if (bottomLine == null) {
+        if (bottomLine == null && bottomRight != null && bottomLeft != null) {
             bottomLine = new Line(bottomLeft.x, bottomLeft.y, bottomRight.x, bottomRight.y);
         }
         return bottomLine;
     }
 
     public Line getLeftLine() {
-        if (leftLine == null) {
+        if (leftLine == null && topLeft != null && bottomLeft != null) {
             leftLine = new Line(topLeft.x, topLeft.y, bottomLeft.x, bottomLeft.y);
         }
         return leftLine;

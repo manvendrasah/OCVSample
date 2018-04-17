@@ -129,6 +129,8 @@ public class PrimaryDotHelper extends BaseDotHelper {
     }
 
     public void drawDotsOnBitmap(Bitmap elementBitmap) {
+        if (dotData == null)
+            return;
         int color = Color.argb(250, 0, 250, 20);
         drawDot(elementBitmap, color, dotData.topLeft);
         drawDot(elementBitmap, color, dotData.topRight);
