@@ -114,10 +114,10 @@ public class SecondaryDotHelper extends BaseDotHelper {
             dot = findDot(thDot, 4, 4);
         if (dot == null)
             dot = findDot(thDot, 6, 6);
-        if (dot == null)
+       /* if (dot == null)
             dot = findDot(thDot, 8, 8);
         if (dot == null)
-            dot = findDot(thDot, 12, 12);
+            dot = findDot(thDot, 12, 12);*/
 
         return dot;
     }
@@ -128,13 +128,13 @@ public class SecondaryDotHelper extends BaseDotHelper {
         if (dot == null)
             dot = findDot(thDot, 4, 4);
         if (dot == null)
-            dot = findDot(thDot, 6, 6);
+            dot = findDot(thDot, 4, 6);
         if (dot == null)
-            dot = findDot(thDot, 8, 8);
-        if (dot == null)
+            dot = findDot(thDot, 4, 8);
+        /*if (dot == null)
             dot = findDot(thDot, 8, 12);
         if (dot == null)
-            dot = findDot(thDot, 12, 16);
+            dot = findDot(thDot, 12, 16);*/
         return dot;
     }
 
@@ -144,13 +144,13 @@ public class SecondaryDotHelper extends BaseDotHelper {
         if (dot == null)
             dot = findDot(thDot, 4, 4);
         if (dot == null)
-            dot = findDot(thDot, 6, 6);
+            dot = findDot(thDot, 6, 4);
         if (dot == null)
-            dot = findDot(thDot, 8, 8);
-        if (dot == null)
+            dot = findDot(thDot, 8, 4);
+       /* if (dot == null)
             dot = findDot(thDot, 12, 8);
         if (dot == null)
-            dot = findDot(thDot, 16, 12);
+            dot = findDot(thDot, 16, 12);*/
         return dot;
     }
 

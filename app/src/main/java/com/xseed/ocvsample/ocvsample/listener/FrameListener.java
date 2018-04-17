@@ -28,6 +28,7 @@ public class FrameListener extends AbstractFrameListener {
     ArrayList<Circle> circles = new ArrayList<Circle>();
     protected volatile int operations;
     protected volatile int circleThreadCount, primaryDotThreadCount, secondaryDotThreadCount, blobThreadCount;
+    private int[] halfCircles;
 
     private CircleDS circleData; // datasource for circles detected
     private PrimaryDotDS primaryDotData;  // datasource for boundary dots
@@ -53,6 +54,7 @@ public class FrameListener extends AbstractFrameListener {
         primaryDotThreadCount = 0;
         secondaryDotThreadCount = 0;
         blobThreadCount = 0;
+        halfCircles = new int[2];
         matDS = new MatDS();
         circleHelper = new CircleHelper();
         primaryDotHelper = new PrimaryDotHelper();
@@ -180,7 +182,8 @@ public class FrameListener extends AbstractFrameListener {
             public void run() {
                 circleThreadCount++;
                 ArrayList<Circle> topHalfCircles = circleHelper.findCircles(matDS.getTopHalfMat());
-                Logger.logOCV("top Half circles = " + circles.size() + "\n");
+                halfCircles[0] = topHalfCircles.size();
+                Logger.logOCV("top Half circles = " + halfCircles[0] + "\n");
                 Logger.logOCV("time > top circles detected : " + (System.currentTimeMillis() - dT));
                 onHalfCircles(topHalfCircles);
             }
@@ -190,7 +193,8 @@ public class FrameListener extends AbstractFrameListener {
             public void run() {
                 circleThreadCount++;
                 ArrayList<Circle> bottomHalfCircles = circleHelper.findCircles(matDS.getBottomHalfMat());
-                Logger.logOCV("bottom Half circles = " + circles.size());
+                halfCircles[1] = bottomHalfCircles.size();
+                Logger.logOCV("bottom Half circles = " + halfCircles[1]);
                 Logger.logOCV("time > bottom circles detected : " + (System.currentTimeMillis() - dT));
                 normalizeHalfCircles(bottomHalfCircles, (int) (matDS.getBaseMat().rows() * MatDS.PART_MULTIPLIER1));
                 onHalfCircles(bottomHalfCircles);
@@ -262,6 +266,10 @@ public class FrameListener extends AbstractFrameListener {
                 postError(ErrorType.TYPE2);
                 return;
             }
+            if (!cRatios.areValidLineSlopes()) {
+                postError(ErrorType.TYPE15);
+                return;
+            }
             if (!secondaryDotData.isValid()) {
                 secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
                 primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
@@ -272,6 +280,10 @@ public class FrameListener extends AbstractFrameListener {
             int numCircles = circles.size();
             if (numCircles < SheetConstants.MIN_DETECTED_CIRCLES) {
                 postError(ErrorType.TYPE3);
+                return;
+            }
+            if (halfCircles[0] > halfCircles[1]) {
+                postError(ErrorType.TYPE14);
                 return;
             }
             getCircleData();

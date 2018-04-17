@@ -133,4 +133,12 @@ public class CircleRatios {
         double dRatioHorz = Math.abs(1 - ratioHorizontalLineLen);
         return dRatioHorz < SheetConstants.LINE_RATIO_THRESHHOLD && dRatioVert < SheetConstants.LINE_RATIO_THRESHHOLD;
     }
+
+    public boolean areValidLineSlopes() {
+        return true;
+      /*  Dot d1 = dotData.topLeft;
+        Dot d2 = dotData.bottomLeft;
+        double slopeLeftLine = Utility.getSlopeOfLine(d2, d2);
+        return slopeLeftLine > SheetConstants.LINE_SLOPE_THRESHHOLD;*/
+    }
 }

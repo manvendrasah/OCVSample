@@ -38,6 +38,7 @@ public class SheetConstants {
     public static final int MIN_DETECTED_IDGRADE_CIRCLES = 8;
     public static final int LOW_THRESHHOLD_DETECTED_CIRCLES = 110;
     public static final double LINE_RATIO_THRESHHOLD = 0.20d;
+    public static final double LINE_SLOPE_THRESHHOLD = 80; //degrees
     /*
          Ratios to circle radius, calculated manually from sheet
      */
@@ -88,9 +89,9 @@ public class SheetConstants {
     public static final int DIST_LLTOP = 51;// distance of (secondary) left line top dot from top left (primary) dot
     public static final int DIST_LLMID = 272;// distance of (secondary)left line mid dot from top left (primary) dot
     public static final int DIST_LLBOTTOM = 34;// distance of (secondary)left line bottom dot from bottom left (primary) dot
-/*
-    Weight value for circles in different BLOCK rows
-*/
+    /*
+        Weight value for circles in different BLOCK rows
+    */
     public static final int WEIGHT_DIST_ROW_CLOSER = 147;
     public static final int WEIGHT_DIST_ROW_FARTHER = 205;
 }

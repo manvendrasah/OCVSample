@@ -34,8 +34,12 @@ public class ErrorType {
     public static final String ERROR_12 = "Miscellaneous error";
     public static final int TYPE13 = 13;
     public static final String ERROR_13 = "Below thresh-hold id & grade circles detected";
+    public static final int TYPE14 = 14;
+    public static final String ERROR_14 = "Reverse sheet detected";
+    public static final int TYPE15 = 15;
+    public static final String ERROR_15 = "Boundary Line slope beyond threshhold";
 
-    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9, ERROR_10, ERROR_11, ERROR_12, ERROR_13};
+    public static String[] errors = {ERROR_0, ERROR_1, ERROR_2, ERROR_3, ERROR_4, ERROR_5, ERROR_6, ERROR_7, ERROR_8, ERROR_9, ERROR_10, ERROR_11, ERROR_12, ERROR_13, ERROR_14, ERROR_15};
 
     private static String[] errorMessages = {
             "Scan success",
@@ -51,7 +55,9 @@ public class ErrorType {
             "SCAN FAIL. Please try again.",
             "SCAN FAIL. Please try again.",
             "SCAN FAIL. Please try again.",
-            "SCAN FAIL. Please try again."
+            "SCAN FAIL. Please try again.",
+            "SCAN FAIL. Reverse sheet cannot be scanned.",
+            "SCAN FAIL. Camera is tilted. Scan sheet by placing camera above sheet."
     };
 
     public static String getErrorString(int errorType) {
