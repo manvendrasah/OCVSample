@@ -1,5 +1,7 @@
 package com.xseed.ocvsample.ocvsample.utility;
 
+import com.xseed.ocvsample.ocvsample.R;
+
 /**
  * Created by Manvendra Sah on 16/09/17.
  */
@@ -60,11 +62,34 @@ public class ErrorType {
             "SCAN FAIL. Camera is tilted. Scan sheet by placing camera above sheet."
     };
 
+    private static int[] errorImageIds = {
+            R.drawable.group_2078,
+            R.drawable.group_845,
+            R.drawable.group_789,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_896,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2078,
+            R.drawable.group_2092,
+            R.drawable.group_789
+    };
+
     public static String getErrorString(int errorType) {
         return errors[errorType];
     }
 
     public static String getErrorMessage(int errortype) {
         return errorMessages[errortype];
+    }
+
+    public static int getErrorImageId(int errortype) {
+        return errorImageIds[errortype];
     }
 }

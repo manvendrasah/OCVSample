@@ -412,6 +412,8 @@ public abstract class AbstractCircleHelper {
     }
 
     protected Line getAnswerLineCorrespondingToIdGrade(int i) {
+        if (i == 0)
+            return secondaryDotDS.getLeftLine();
         Circle c0 = circleData.answerCircleMap.get(0).get(i);
         Circle cn = circleData.answerCircleMap.get(circleData.answerCircleMap.size() - 1).get(i);
         Line line = new Line(c0.center.x, c0.center.y, cn.center.x, cn.center.y);

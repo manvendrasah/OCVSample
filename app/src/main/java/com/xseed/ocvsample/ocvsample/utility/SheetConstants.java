@@ -29,7 +29,7 @@ public class SheetConstants {
     public static final double DARKNESS_THRESHHOLD = 0.1d;
     public static final double DARKNESS_FILTER = 0.5;
     public static final double SIZEFACTOR = 1;
-    public static final double MIN_DARKNESS = 70d;//115d;
+    public static final double MIN_DARKNESS = 110d;//115d, 70d;
     /*
         Constants for configuring scanning constraints
     */

@@ -34,7 +34,7 @@ public class CircleDS {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         String temp = "\n";
         int ind = 0, total = 0;
         for (Map.Entry<Integer, ArrayList<Circle>> entry : answerCircleMap.entrySet()) {

@@ -124,8 +124,12 @@ public class MatDS {
     public Bitmap getBitmapForBlobDetection() {
         // returns threshholded bitmap for detecting answer blobs
         if (blobDetectionBitmap == null) {
-            blobDetectionBitmap = Bitmap.createBitmap(threshMat.cols(), threshMat.rows(), Config.ARGB_8888);
-            Utils.matToBitmap(threshMat, blobDetectionBitmap);
+            Mat blobMat = baseMat.clone();
+            Imgproc.cvtColor(blobMat, blobMat, Imgproc.COLOR_RGB2GRAY);
+            Imgproc.adaptiveThreshold(blobMat, blobMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C,
+                    Imgproc.THRESH_BINARY, 69, 5);
+            blobDetectionBitmap = Bitmap.createBitmap(blobMat.cols(), blobMat.rows(), Config.ARGB_8888);
+            Utils.matToBitmap(blobMat, blobDetectionBitmap);
         }
         return blobDetectionBitmap;
     }

@@ -4,5 +4,6 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="grey_light_alpha">#80DFDFDF</color>
-
+    <color name="red_app">#ba131a</color>
+    <color name="yellow_button">#ffd800</color>
 </resources>

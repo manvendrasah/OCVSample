@@ -6,7 +6,16 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 
+import com.xseed.ocvsample.ocvsample.R;
 import com.xseed.ocvsample.ocvsample.android.MyApplication;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
 import com.xseed.ocvsample.ocvsample.pojo.Dot;
@@ -158,7 +167,7 @@ public class Utility {
         emails.add("renjith.ponnappan@xseededucation.com");
         emails.add("rahul.tiwari@xseededucation.com");
         ei.putExtra(Intent.EXTRA_EMAIL, new String[]{"manvendra.sah@xseededucation.com", "vinay.revankar@xseededucation.com ",
-                /*"sandeep.kamjula@xseededucation.com", */"raj.chourasia@xseededucation.com", "renjith.ponnappan@xseededucation.com","rahul.tiwari@xseededucation.com"});
+                /*"sandeep.kamjula@xseededucation.com", */"raj.chourasia@xseededucation.com", "renjith.ponnappan@xseededucation.com", "rahul.tiwari@xseededucation.com"});
         ei.putExtra(Intent.EXTRA_SUBJECT, "OCV : ");
         ei.setType("message/rfc822");
         ArrayList<String> fileList = new ArrayList<String>();
@@ -392,5 +401,30 @@ public class Utility {
         double x = d1.x * (totalDistD1D2 - disD1) / totalDistD1D2 + d2.x * disD1 / totalDistD1D2;
         double y = d1.y * (totalDistD1D2 - disD1) / totalDistD1D2 + d2.y * disD1 / totalDistD1D2;
         return new Dot(x, y);
+    }
+
+    public static double getSlopeOfLine(Dot dot1, Dot dot2) {
+        return 90;
+    }
+
+    public static PopupWindow showScanFailPopup(Context context, View root, int errorType,
+                                                OnClickListener scanFailPopupDismissClickListener, OnClickListener scanFailPopupSendErrorClickListener) {
+        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View customView = layoutInflater.inflate(R.layout.popup_scan_fail, null);
+        final PopupWindow popupWindow;
+
+        popupWindow = new PopupWindow(customView, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        popupWindow.showAtLocation(root, Gravity.CENTER, 0, 0);
+
+        TextView tvMessage = (TextView) customView.findViewById(R.id.tv_scan_fail_message);
+        tvMessage.setText(ErrorType.getErrorMessage(errorType));
+
+        ImageView ivImage = (ImageView) customView.findViewById(R.id.iv_scan_fail_image);
+        ivImage.setImageResource(ErrorType.getErrorImageId(errorType));
+
+        customView.findViewById(R.id.tv_scan_fail_scan).setOnClickListener(scanFailPopupDismissClickListener);
+
+        customView.findViewById(R.id.fl_send_error).setOnClickListener(scanFailPopupSendErrorClickListener);
+        return popupWindow;
     }
 }

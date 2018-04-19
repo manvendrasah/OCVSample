@@ -270,14 +270,18 @@ public class FrameListener extends AbstractFrameListener {
                 postError(ErrorType.TYPE15);
                 return;
             }
+            int numCircles = circles.size();
             if (!secondaryDotData.isValid()) {
-                secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
-                primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
-                postBitmap(matDS.getElementBitmap(), TAG_ID_DOTS);
-                postError(ErrorType.TYPE9);
+                if (numCircles > SheetConstants.MIN_DETECTED_CIRCLES && halfCircles[0] > halfCircles[1]) {
+                    postError(ErrorType.TYPE14);
+                } else {
+                    secondaryDotHelper.drawTheoreticalIdentityDots(matDS.getElementBitmap());
+                    primaryDotHelper.drawDotsOnBitmap(matDS.getElementBitmap());
+                    postBitmap(matDS.getElementBitmap(), TAG_ID_DOTS);
+                    postError(ErrorType.TYPE9);
+                }
                 return;
             }
-            int numCircles = circles.size();
             if (numCircles < SheetConstants.MIN_DETECTED_CIRCLES) {
                 postError(ErrorType.TYPE3);
                 return;
@@ -320,12 +324,12 @@ public class FrameListener extends AbstractFrameListener {
     private void findBlobs() {
         Logger.logOCV("blob detection START time = " + (System.currentTimeMillis() - dT));
         blobHelper = new BlobHelper(primaryDotData, circleData, matDS.getBitmapForBlobDetection(), cRatios);
-
+        blobThreadCount = 2;
         new Thread() {
             @Override
             public void run() {
                 super.run();
-                blobThreadCount++;
+//                blobThreadCount++;
                 blobHelper.findBlobsInSecondHalfCircles();
                 Logger.logOCV("2nd half blobs detected > time >" + (System.currentTimeMillis() - dT));
                 onHalfBlobsDetected();
@@ -336,7 +340,7 @@ public class FrameListener extends AbstractFrameListener {
             @Override
             public void run() {
                 super.run();
-                blobThreadCount++;
+//                blobThreadCount++;
                 blobHelper.findBlobsInFirstHalfCircles();
                 Logger.logOCV("1st half blobs detected > time >" + (System.currentTimeMillis() - dT));
                 onHalfBlobsDetected();

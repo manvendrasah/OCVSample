@@ -18,11 +18,13 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.xseed.ocvsample.ocvsample.R;
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LayoutInflater inflater;
     private Menu menu;
     private ProgressDialog progressDialog;
+    private PopupWindow scanFailPopup;
     private long sT = 0;
     private static final int CAMERA_RESULT_CODE = 76;
     private static final int STORAGE_RESULT_CODE = 177;
@@ -76,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         footer.setOnClickListener(this);
         flTile.setOnClickListener(this);
         llContainer.setOnClickListener(this);
+        findViewById(R.id.iv_crosshair).setOnClickListener(this);
     }
 
     private void checkStoragePermission() {
@@ -182,11 +186,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onOMRSheetGradingFailed(final int errorType) {
+        if (scanFailPopup != null && scanFailPopup.isShowing())
+            scanFailPopup.dismiss();
+        scanFailPopup = Utility.showScanFailPopup(MainActivity.this, findViewById(R.id.root),
+                errorType, scanFailPopupDismissClickListener, scanFailPopupSendErrorClickListener);
         long dT = System.currentTimeMillis();
         showOverflowMenu(true);
         logScanFailure((dT - sT), errorType);
         hsvFrame.setVisibility(View.VISIBLE);
-        showErrorSnackBar(errorType);
+//        showErrorSnackBar(errorType);
 //        Toast.makeText(MainActivity.this,
 //                "Sheet Detection FAILED! " + ErrorType.getErrorString(errorType), Toast.LENGTH_LONG).show();
         Logger.logOCV("Sheet Detection fail > " + ErrorType.getErrorString(errorType));
@@ -317,5 +325,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         params.width = side;
         params.height = side;
         iv.setLayoutParams(params);
+    }
+
+    private OnClickListener scanFailPopupDismissClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (scanFailPopup != null && scanFailPopup.isShowing()) {
+                scanFailPopup.dismiss();
+                restoreScanState();
+            }
+        }
+    };
+
+    private OnClickListener scanFailPopupSendErrorClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Utility.sendErrorFiles(MainActivity.this);
+        }
+    };
+
+    @Override
+    public void onBackPressed() {
+        if (scanFailPopup != null && scanFailPopup.isShowing()) {
+            scanFailPopup.dismiss();
+            restoreScanState();
+        } else
+            super.onBackPressed();
     }
 }

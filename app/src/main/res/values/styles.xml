@@ -8,4 +8,13 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="ButtonTextStyle" parent="android:Widget.TextView">
+        <item name="android:layout_width">197dp</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:background">@drawable/bg_button</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
 </resources>

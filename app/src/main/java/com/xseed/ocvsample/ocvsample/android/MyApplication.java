@@ -28,7 +28,7 @@ public class MyApplication extends Application {
         super.onCreate();
         Fabric.with(this, new Crashlytics());
         instance = this;
-        Utility.deleteImageDirectory();
+//        Utility.deleteImageDirectory();
     }
 
     @Override
