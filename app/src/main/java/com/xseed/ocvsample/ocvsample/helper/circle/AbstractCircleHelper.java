@@ -90,6 +90,9 @@ public abstract class AbstractCircleHelper {
         filterDuplicateCircles(circleData.idCircleMap);
         filterDuplicateCircles(circleData.gradeCircleMap);
 
+        filterExtraTopCircles(circleData.idCircleMap);
+        filterExtraTopCircles(circleData.gradeCircleMap);
+
         extrapolateIdGradeUndetectedCircles();
     }
 
@@ -508,6 +511,29 @@ public abstract class AbstractCircleHelper {
             }
         }
         Logger.logOCV("Filtered duplicates = " + count);
+    }
+
+    private void filterExtraTopCircles(TreeMap<Integer, ArrayList<Circle>> map) {
+        Double topDist = Utility.getDistanceBetweenDots(primaryDotDS.topLeft, secondaryDotDS.llTop);
+        Logger.logOCV("filterExtraTopCircles > top points > " + primaryDotDS.topLeft.toString() + " > " + secondaryDotDS.llTop.toString() + " > dist = " + topDist);
+        for (ArrayList<Circle> list : map.values()) {
+            filterExtraTopCirclesFromList(list, topDist);
+        }
+    }
+
+    private void filterExtraTopCirclesFromList(List<Circle> list, Double topDist) {
+        int size = list.size() > 2 ? 2 : list.size();
+        for (int i = 0; i < size; ++i) {
+            Circle circle = list.get(i);
+            double dist = Utility.circleToLineDistance(primaryDotDS.getTopLine(), circle);
+            boolean isAboveTop = dist < (topDist - avgIdGradeRadius);
+            Logger.logOCV("filterExtraTopCirclesFromList > " + circle.toString() + " > dist = " + dist + ", isAbove = " + isAboveTop);
+            if (isAboveTop) {
+                list.remove(circle);
+                i--;
+                size--;
+            }
+        }
     }
 
     private boolean filterOutExtraAnswerCircles() {

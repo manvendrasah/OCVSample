@@ -43,10 +43,10 @@ public class MatDS {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Config.ARGB_8888;
         options.inMutable = true;
-        if (frame.getPreviewHeight() > 960) {
+        /*if (frame.getPreviewHeight() > 960) {
             options.inSampleSize = 2;
             Logger.logOCV("Sample Size = 2");
-        }
+        }*/
         baseBitmap = BitmapFactory.decodeByteArray(frame.getData(), 0, frame.getData().length, options);
         Logger.logOCV("Base Bitmap > " + baseBitmap.getWidth() + "," + baseBitmap.getHeight());
     }

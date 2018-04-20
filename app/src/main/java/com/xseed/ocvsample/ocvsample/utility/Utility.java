@@ -232,6 +232,15 @@ public class Utility {
         return dis;
     }
 
+    public static double getDistanceBetweenDots(Dot p1, Dot p2) {
+        double x1 = p1.x;
+        double y1 = p1.y;
+        double x2 = p2.x;
+        double y2 = p2.y;
+        double dis = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        return dis;
+    }
+
     public static double circleToLineDistance(Line line, Circle circle) {
         return pointToLineDistance(line.p1, line.p2, circle.center);
     }
