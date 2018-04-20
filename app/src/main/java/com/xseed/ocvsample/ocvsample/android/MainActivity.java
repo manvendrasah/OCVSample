@@ -32,10 +32,13 @@ import com.xseed.ocvsample.ocvsample.camera.AutoFitSurfaceView;
 import com.xseed.ocvsample.ocvsample.camera.CameraView;
 import com.xseed.ocvsample.ocvsample.listener.AbstractFrameListener;
 import com.xseed.ocvsample.ocvsample.listener.OMRSheetListener;
+import com.xseed.ocvsample.ocvsample.pojo.Output;
 import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
 import com.xseed.ocvsample.ocvsample.utility.Utility;
+
+import org.opencv.core.Mat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -169,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onOMRSheetGradingComplete() {
+    public void onOMRSheetGradingComplete(Bitmap originalBitmap, Mat originalMat, Output finalOutput) {
         long dT = System.currentTimeMillis();
         logScanSucess((dT - sT));
         camPreview.startPreview();

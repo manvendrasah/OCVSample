@@ -75,6 +75,10 @@ public class MatDS {
         return elementMat;
     }
 
+    public Bitmap getBaseBitmap() {
+        return baseBitmap;
+    }
+
     public Bitmap getElementBitmap() {
         if (elementBitmap == null) {
             elementBitmap = Bitmap.createBitmap(elementMat.cols(), elementMat.rows(), Config.ARGB_8888);

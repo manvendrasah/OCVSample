@@ -33,6 +33,10 @@ public class BlobHelper extends AbstractBlobHelper {
         blobData = new BlobDS();
     }
 
+    public BlobDS getBlobData() {
+        return blobData;
+    }
+
     @Override
     protected void findAnswersBlobs(int startIndex) {
         int endIndex = circleData.transwerCircleMap.size();
@@ -87,7 +91,8 @@ public class BlobHelper extends AbstractBlobHelper {
             //Imgproc.rectangle(mat, getTopLeftPointOfCircle(blob), getBottomRightPointOfCircle(blob), new Scalar(10, 255, 10), 2);
             Imgproc.putText(mat, String.valueOf(blob.index), getPointToRightForText(blob), Core.FONT_HERSHEY_COMPLEX_SMALL, 1, new Scalar(54, 31, 200), 2);
         }
-        for (Blob blob : blobData.idBlobs) {
+        for (Map.Entry<Integer, Blob> entry : blobData.idBlobs.entrySet()) {
+            Blob blob = entry.getValue();
             Imgproc.circle(mat, blob.circle.center, (int) Math.ceil(cRatios.avgIdGradeRadius), new Scalar(10, 255, 10), 2);
             //Imgproc.rectangle(mat, getTopLeftPointOfCircle(blob), getBottomRightPointOfCircle(blob), new Scalar(10, 255, 10), 2);
             Imgproc.putText(mat, String.valueOf(blob.index), getPointToRightForText(blob), Core.FONT_HERSHEY_COMPLEX_SMALL, 1, new Scalar(54, 31, 200), 2);

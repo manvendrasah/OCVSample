@@ -7,11 +7,13 @@ import com.xseed.ocvsample.ocvsample.datasource.CircleRatios;
 import com.xseed.ocvsample.ocvsample.datasource.MatDS;
 import com.xseed.ocvsample.ocvsample.datasource.PrimaryDotDS;
 import com.xseed.ocvsample.ocvsample.datasource.SecondaryDotDS;
+import com.xseed.ocvsample.ocvsample.helper.OutputHelper;
 import com.xseed.ocvsample.ocvsample.helper.blob.BlobHelper;
 import com.xseed.ocvsample.ocvsample.helper.circle.CircleHelper;
 import com.xseed.ocvsample.ocvsample.helper.dot.PrimaryDotHelper;
 import com.xseed.ocvsample.ocvsample.helper.dot.SecondaryDotHelper;
 import com.xseed.ocvsample.ocvsample.pojo.Circle;
+import com.xseed.ocvsample.ocvsample.pojo.Output;
 import com.xseed.ocvsample.ocvsample.utility.Constants;
 import com.xseed.ocvsample.ocvsample.utility.ErrorType;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
@@ -58,6 +60,7 @@ public class FrameListener extends AbstractFrameListener {
         matDS = new MatDS();
         circleHelper = new CircleHelper();
         primaryDotHelper = new PrimaryDotHelper();
+        output = new Output();
     }
 
     @Override
@@ -358,8 +361,10 @@ public class FrameListener extends AbstractFrameListener {
                     Logger.logOCV("blob detection END time = " + (System.currentTimeMillis() - dT));
                     blobHelper.drawBlobsOnMat(matDS.getAnswerMatToDraw());
                     Logger.logOCV("blob draw on mat time = " + (System.currentTimeMillis() - dT));
+                    output = OutputHelper.getOutput(blobHelper.getBlobData());
+                    Logger.logOCV(output.toString());
                     postBitmap(matDS.getAnswerBitmapToDraw(), TAG_BLOBS_DETECTED);
-                    postSuccess();
+                    postSuccess(matDS.getAnswerBitmapToDraw(), matDS.getBaseMat(), output);
                     Logger.logOCV("PROCESS COMPLETION time = " + (System.currentTimeMillis() - dT));
                 }
             });

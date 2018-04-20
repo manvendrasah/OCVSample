@@ -3,7 +3,9 @@ package com.xseed.ocvsample.ocvsample.listener;
 
 import android.graphics.Bitmap;
 
-import java.util.ArrayList;
+import com.xseed.ocvsample.ocvsample.pojo.Output;
+
+import org.opencv.core.Mat;
 
 /**
  * Created by Manvendra Sah on 22/06/17.
@@ -11,7 +13,7 @@ import java.util.ArrayList;
 
 public interface OMRSheetListener {
 
-    void onOMRSheetGradingComplete(/*Bitmap bitmap*/);
+    void onOMRSheetGradingComplete(Bitmap originalBitmap, Mat originalMat, Output finalOutput);
 
     void onOMRSheetGradingFailed(int errorType);
 

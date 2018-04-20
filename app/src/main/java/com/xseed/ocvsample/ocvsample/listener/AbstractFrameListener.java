@@ -8,12 +8,14 @@ import android.view.Surface;
 
 import com.xseed.ocvsample.ocvsample.android.MainActivity;
 import com.xseed.ocvsample.ocvsample.pojo.FrameModel;
+import com.xseed.ocvsample.ocvsample.pojo.Output;
 import com.xseed.ocvsample.ocvsample.utility.Logger;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.InstallCallbackInterface;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
 
 /**
  * Created by Manvendra Sah on 27/03/18.
@@ -26,6 +28,7 @@ public abstract class AbstractFrameListener implements Camera.PictureCallback {
     protected FrameModel frame;
     protected long dT;
     protected Handler handler = new Handler();
+    protected Output output;
 
     public static final String TAG_ADAPTIVE_THRESHHOLD = "AdaptThresh";
     public static final String TAG_INITIAL_CIRCLES = "InitialCircles";
@@ -113,12 +116,12 @@ public abstract class AbstractFrameListener implements Camera.PictureCallback {
         });
     }
 
-    protected void postSuccess() {
+    protected void postSuccess(final Bitmap originalBitmap, final Mat originalMat, final Output finalOutput) {
         handler.post(new Runnable() {
             @Override
             public void run() {
                 if (mSheetListener != null) {
-                    mSheetListener.onOMRSheetGradingComplete();
+                    mSheetListener.onOMRSheetGradingComplete(originalBitmap, originalMat, finalOutput);
                 }
             }
         });

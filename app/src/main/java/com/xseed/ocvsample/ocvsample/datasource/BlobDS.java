@@ -12,7 +12,7 @@ import java.util.HashMap;
 public class BlobDS {
 
     public HashMap<Integer, Blob> answerBlobs = new HashMap<>();
-    public ArrayList<Blob> idBlobs = new ArrayList<>();
+    public HashMap<Integer, Blob> idBlobs = new HashMap<>();
     public ArrayList<Blob> gradeBlobs = new ArrayList<>();
 
     public void setGradeBlob(Blob blob) {
@@ -20,7 +20,7 @@ public class BlobDS {
     }
 
     public void setIdBlob(Blob blob) {
-        idBlobs.add(blob);
+        idBlobs.put(blob.superIndex, blob);
     }
 
     public void setAnswerBlob(int index, Blob blob) {
