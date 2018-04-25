@@ -101,7 +101,7 @@ public class BlobHelper extends AbstractBlobHelper {
             Blob blob = entry.getValue();
             Imgproc.circle(mat, blob.circle.center, (int) Math.ceil(cRatios.avgAnswerRadius), new Scalar(10, 255, 10), 2);
             //Imgproc.rectangle(mat, getTopLeftPointOfCircle(blob), getBottomRightPointOfCircle(blob), new Scalar(10, 255, 10), 2);
-            Imgproc.putText(mat, getAlphaForAnswerSubIndex(blob.index), getPointToBottomForText(blob), Core.FONT_HERSHEY_COMPLEX_SMALL, 1.15, new Scalar(54, 31, 200), 2);
+            Imgproc.putText(mat, blob.superIndex + getAlphaForAnswerSubIndex(blob.index), getPointToBottomForText(blob), Core.FONT_HERSHEY_COMPLEX_SMALL, 1.10, new Scalar(54, 31, 200), 2);
         }
     }
 }
