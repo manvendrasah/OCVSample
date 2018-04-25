@@ -28,15 +28,15 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.xseed.ocvsample.ocvsample.R;
-import com.xseed.ocvsample.ocvsample.camera.AutoFitSurfaceView;
-import com.xseed.ocvsample.ocvsample.camera.CameraView;
-import com.xseed.ocvsample.ocvsample.listener.AbstractFrameListener;
-import com.xseed.ocvsample.ocvsample.listener.OMRSheetListener;
-import com.xseed.ocvsample.ocvsample.pojo.Output;
-import com.xseed.ocvsample.ocvsample.utility.Constants;
-import com.xseed.ocvsample.ocvsample.utility.ErrorType;
-import com.xseed.ocvsample.ocvsample.utility.Logger;
-import com.xseed.ocvsample.ocvsample.utility.Utility;
+import com.xseed.ocvsample.ocvsample.scanbase.camera.AutoFitSurfaceView;
+import com.xseed.ocvsample.ocvsample.scanbase.camera.CameraView;
+import com.xseed.ocvsample.ocvsample.scanbase.listener.AbstractFrameListener;
+import com.xseed.ocvsample.ocvsample.scanbase.listener.OMRSheetListener;
+import com.xseed.ocvsample.ocvsample.scanbase.pojo.SheetOutput;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.Constants;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.ErrorType;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.Logger;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.Utility;
 
 import org.opencv.core.Mat;
 
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onOMRSheetGradingComplete(Bitmap originalBitmap, Mat originalMat, Output finalOutput) {
+    public void onOMRSheetGradingComplete(Bitmap originalBitmap, Mat originalMat, SheetOutput finalOutput) {
         long dT = System.currentTimeMillis();
         logScanSucess((dT - sT));
         camPreview.startPreview();

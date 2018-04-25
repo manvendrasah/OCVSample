@@ -1,16 +1,15 @@
-package com.xseed.ocvsample.ocvsample.pojo;
+package com.xseed.ocvsample.ocvsample.scanbase.pojo;
 
 /**
- * Created by Manvendra Sah on 20/04/18.
+ * Created by Manvendra Sah on 25/04/18.
  */
 
-public class Output {
-
+public class SheetOutput {
     private int[] answers;
     private int rollNo;
     private int grade;
 
-    public Output() {
+    public SheetOutput() {
         answers = new int[45];
     }
 
@@ -49,6 +48,6 @@ public class Output {
 
     @Override
     public String toString() {
-        return "Output > TestId : " + rollNo + ", Grade : " + grade + "\nAnswers : " + getAnswerOutputArray();
+        return "SheetOutput > TestId : " + rollNo + ", Grade : " + grade + "\nAnswers : " + getAnswerOutputArray();
     }
 }

@@ -3,8 +3,8 @@ package com.xseed.ocvsample.ocvsample.android;
 import android.app.Application;
 
 import com.crashlytics.android.Crashlytics;
-import com.xseed.ocvsample.ocvsample.utility.Logger;
-import com.xseed.ocvsample.ocvsample.utility.Utility;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.Logger;
+import com.xseed.ocvsample.ocvsample.scanbase.utility.Utility;
 
 import io.fabric.sdk.android.Fabric;
 
